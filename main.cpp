@@ -17,6 +17,7 @@
 #include "src/VBO.h"
 #include "src/EBO.h"
 #include "src/Camera.h"
+#include "src/Shake.h"
 
 const int WINDOW_W = 800;
 const int WINDOW_H = 600;
@@ -29,6 +30,7 @@ Camera* camera = nullptr;
 Shader* shader = nullptr;
 VAO* sphereVAO = nullptr;
 GLsizei sphereIndexCount = 0;
+Shake shake;
 
 // ---------------------------------------------------------------
 // Simple UV sphere (position + normal, interleaved). Used as the globe for now.
@@ -72,7 +74,12 @@ void display()
 	shader->Activate();
 	camera->Matrix(45.0f, GLOBE_RADIUS * 0.01f, GLOBE_RADIUS * 50.0f, *shader, "camMatrix");
 
-	glm::mat4 model(1.0f);
+	float t = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	glm::vec3 jitter(
+		std::sin(t * 47.0f),
+		std::sin(t * 61.0f),
+		std::sin(t * 53.0f));
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), jitter * (0.03f * shake.intensity));
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 	sphereVAO->Bind();
@@ -89,6 +96,18 @@ void reshape(int w, int h)
 	glutPostRedisplay();
 }
 
+void idle()
+{
+	static int lastTime = glutGet(GLUT_ELAPSED_TIME);
+	int currentTime = glutGet(GLUT_ELAPSED_TIME);
+	float dt = (currentTime - lastTime) / 1000.0f;
+	if (dt > 0.1f) dt = 0.1f;
+	lastTime = currentTime;
+
+	shake.Update(dt);
+	glutPostRedisplay();
+}
+
 // Arrow keys: orbit angle and height
 void specialKeys(int key, int, int)
 {
@@ -101,7 +120,8 @@ void keyboard(unsigned char key, int, int)
 {
 	if (key == 27) { glutLeaveMainLoop(); return; }
 
-	// TODO: SPACE = shake the globe
+	if (key == ' ')
+		shake.Impulse(0.6f);
 
 	if (camera->Inputs(key))
 		glutPostRedisplay();
@@ -110,7 +130,9 @@ void keyboard(unsigned char key, int, int)
 // Mouse: RIGHT button drag = look around (free camera).
 // LEFT button is kept free for shaking the globe.
 bool lookDragging = false;
+bool leftDragging = false;
 int lastX = 0, lastY = 0;
+int lastLeftX = 0, lastLeftY = 0;
 
 void mouse(int button, int state, int x, int y)
 {
@@ -119,7 +141,13 @@ void mouse(int button, int state, int x, int y)
 		lookDragging = (state == GLUT_DOWN);
 		lastX = x; lastY = y;
 	}
-	// TODO: GLUT_LEFT_BUTTON = shake the globe
+	if (button == GLUT_LEFT_BUTTON)
+	{
+		leftDragging = (state == GLUT_DOWN);
+		lastLeftX = x; lastLeftY = y;
+		if (state == GLUT_DOWN)
+			shake.Impulse(0.5f);
+	}
 }
 
 void motion(int x, int y)
@@ -128,6 +156,13 @@ void motion(int x, int y)
 	{
 		camera->MouseLook(x - lastX, y - lastY);
 		glutPostRedisplay();
+	}
+	if (leftDragging)
+	{
+		float dx = (float)(x - lastLeftX);
+		float dy = (float)(y - lastLeftY);
+		shake.Impulse(0.002f * std::sqrt(dx * dx + dy * dy));
+		lastLeftX = x; lastLeftY = y;
 	}
 	lastX = x; lastY = y;
 }
@@ -177,6 +212,7 @@ int main(int argc, char** argv)
 	sphereVAO->LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 
 	glutDisplayFunc(display);
+	glutIdleFunc(idle);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(specialKeys);
