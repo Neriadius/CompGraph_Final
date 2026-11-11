@@ -7,8 +7,9 @@ class Camera;
 class Shader;
 
 // Owner: Person 2. Implement snow simulation and transparent flake rendering here.
-// Draw contract: depth test ON, depth mask OFF, blending ON; keep flakes inside
-// globeRadius and handle cameraInside without huge or vanishing close flakes.
+// Snow sets and restores its own GL state:
+// blending ON, depth test ON, depth mask OFF while drawing.
+// Keep flakes inside globeRadius and handle cameraInside without huge or vanishing close flakes.
 // Restore glDepthMask(GL_TRUE) and disable blending before returning.
 class Snow
 {
