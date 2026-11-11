@@ -27,6 +27,9 @@ private:
 	VBO* sphereVBO = nullptr;
 	EBO* sphereEBO = nullptr;
 	GLsizei sphereIndexCount = 0;
+	GLuint skyCubemap = 0;
+	GLint skyBoxLocation = -1;
+	GLint reflectStrengthLocation = -1;
 };
 
 #endif

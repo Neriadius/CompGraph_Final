@@ -8,6 +8,8 @@ uniform vec3 camPos;
 uniform vec3 lightDir;   // normalized direction TOWARD the light
 uniform vec3 glassTint;
 uniform float glassAlpha;
+uniform samplerCube skyBox;
+uniform float reflectStrength;
 
 void main()
 {
@@ -18,7 +20,11 @@ void main()
 	float spec = pow(max(dot(N, H), 0.0), 96.0) * 1.2;
 	float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
 	float alpha = clamp(glassAlpha + 0.5 * fres, 0.0, 1.0);
+	vec3 R = reflect(-V, N);
+	vec3 refl = texture(skyBox, R).rgb;
+	float k = reflectStrength * (0.25 + 0.75 * fres);
+	alpha = clamp(alpha + 0.3 * k, 0.0, 1.0);
 	// Premultiplied output: keep specular highlights independent of alpha.
-	vec3 rgb = glassTint * alpha + vec3(spec);
+	vec3 rgb = glassTint * alpha + refl * k + vec3(spec);
 	FragColor = vec4(rgb, alpha);
 }
