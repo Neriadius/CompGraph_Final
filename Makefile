@@ -33,7 +33,8 @@ BUILD   := build
 HEADERS := $(wildcard src/*.h)
 
 OBJS := $(BUILD)/main.o $(BUILD)/glad.o \
-        $(BUILD)/shaderClass.o $(BUILD)/VAO.o $(BUILD)/VBO.o $(BUILD)/EBO.o $(BUILD)/Camera.o
+        $(BUILD)/shaderClass.o $(BUILD)/VAO.o $(BUILD)/VBO.o $(BUILD)/EBO.o $(BUILD)/Camera.o \
+        $(BUILD)/Scene.o $(BUILD)/Snow.o $(BUILD)/Globe.o
 
 .PHONY: all run clean
 
