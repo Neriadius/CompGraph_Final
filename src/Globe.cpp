@@ -3,6 +3,9 @@
 #include <vector>
 #include <cmath>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Camera.h"
 #include "shaderClass.h"
 #include "VAO.h"
@@ -12,7 +15,7 @@
 // ---------------------------------------------------------------
 // Simple UV sphere (position + normal, interleaved). Used as the globe for now.
 // ---------------------------------------------------------------
-void buildSphere(float radius, int stacks, int slices,
+static void buildSphere(float radius, int stacks, int slices,
 	std::vector<GLfloat>& vertices, std::vector<GLuint>& indices)
 {
 	const float PI = 3.14159265358979f;
@@ -64,12 +67,7 @@ void Globe::DrawGlass(GlassPass pass, const FrameContext& frame, Camera& camera)
 	shader->Activate();
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
 
-	glm::vec3 jitter(
-		std::sin(frame.time * 47.0f),
-		std::sin(frame.time * 61.0f),
-		std::sin(frame.time * 53.0f));
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), jitter * (0.03f * frame.shakeIntensity));
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
 
 	sphereVAO->Bind();
 	glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);

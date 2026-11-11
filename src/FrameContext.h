@@ -12,6 +12,8 @@ struct FrameContext
 	bool cameraInside;
 	glm::vec3 globeCenter;
 	float globeRadius;
+	// Model matrix with the shake jitter applied. All globe contents must use it.
+	glm::mat4 globeModel;
 };
 
 #endif

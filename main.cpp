@@ -10,6 +10,8 @@
 
 #include <glad/glad.h>
 #include <GL/freeglut.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "src/Camera.h"
 #include "src/Shake.h"
@@ -35,20 +37,34 @@ float frameDt = 0.0f;
 // ---------------------------------------------------------------
 // GLUT callbacks
 // ---------------------------------------------------------------
+FrameContext MakeFrame(float timeSeconds)
+{
+	FrameContext frame;
+	frame.dt = frameDt;
+	frame.time = timeSeconds;
+	frame.shakeIntensity = shake.intensity;
+	frame.camPos = camera->Position;
+	frame.cameraInside = glm::length(camera->Position - GLOBE_CENTER) < GLOBE_RADIUS;
+	frame.globeCenter = GLOBE_CENTER;
+	frame.globeRadius = GLOBE_RADIUS;
+
+	glm::vec3 jitter(
+		std::sin(timeSeconds * 47.0f),
+		std::sin(timeSeconds * 61.0f),
+		std::sin(timeSeconds * 53.0f));
+	frame.globeModel = glm::translate(glm::mat4(1.0f), jitter * (0.03f * shake.intensity));
+
+	return frame;
+}
+
 void display()
 {
 	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-	FrameContext frame = {
-		frameDt,
-		time,
-		shake.intensity,
-		camera->Position,
-		glm::length(camera->Position - GLOBE_CENTER) < GLOBE_RADIUS,
-		GLOBE_CENTER,
-		GLOBE_RADIUS
-	};
+	FrameContext frame = MakeFrame(time);
 
 	glClearColor(0.05f, 0.06f, 0.1f, 1.0f);
+	// Restore depth writes so glClear clears the depth buffer.
+	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Glass is drawn back faces -> snow -> front faces so it works outside and inside the globe.
@@ -78,15 +94,7 @@ void idle()
 	frameDt = dt;
 
 	shake.Update(dt);
-	FrameContext frame = {
-		frameDt,
-		currentTime / 1000.0f,
-		shake.intensity,
-		camera->Position,
-		glm::length(camera->Position - GLOBE_CENTER) < GLOBE_RADIUS,
-		GLOBE_CENTER,
-		GLOBE_RADIUS
-	};
+	FrameContext frame = MakeFrame(currentTime / 1000.0f);
 	snow.Update(frame);
 	glutPostRedisplay();
 }
