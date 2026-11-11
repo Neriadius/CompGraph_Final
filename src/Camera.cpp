@@ -89,6 +89,26 @@ void Camera::ToggleMode()
 	}
 }
 
+void Camera::ClampToSphere(const glm::vec3& center, float softRadius, float easeSpeed, float dt)
+{
+	glm::vec3 d = Position - center;
+	float dist = glm::length(d);
+	if (dist == 0.0f || dist <= softRadius || dt <= 0.0f || easeSpeed <= 0.0f) return;
+
+	float newDist = softRadius + (dist - softRadius) * std::exp(-easeSpeed * dt);
+	Position = center + d / dist * newDist;
+
+	if (mode == ORBIT)
+	{
+		// Keep the saved cylinder consistent with the eased position for inputs and C.
+		glm::vec3 offset = Position - target;
+		orbit.radius = glm::length(glm::vec2(offset.x, offset.z));
+		orbit.height = offset.y;
+		orbit.angle = glm::degrees(std::atan2(offset.z, offset.x));
+		UpdatePosition();
+	}
+}
+
 // ---------------- matrices ----------------
 glm::mat4 Camera::ViewMatrix() const
 {
