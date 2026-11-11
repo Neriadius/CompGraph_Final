@@ -11,6 +11,14 @@
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
+#include "Cubemap.h"
+
+const float GLASS_ALPHA = 0.2f;
+const float CUBEMAP_STRENGTH = 0.6f;
+const float CUBEMAP_STRENGTH_INSIDE = 0.25f;
+const glm::vec3 GLASS_TINT(0.75f, 0.88f, 1.0f);
+// Temporary light direction; Person 4/3 will later feed real fire/window lights.
+const glm::vec3 GLASS_LIGHT_DIR = glm::normalize(glm::vec3(-0.4f, 0.8f, 0.5f));
 
 // ---------------------------------------------------------------
 // Simple UV sphere (position + normal, interleaved). Used as the globe for now.
@@ -39,13 +47,18 @@ static void buildSphere(float radius, int stacks, int slices,
 		{
 			GLuint a = i * (slices + 1) + j;
 			GLuint b = a + slices + 1;
-			indices.insert(indices.end(), { a, b, a + 1, a + 1, b, b + 1 });
+			// Counter-clockwise when viewed from outside the sphere.
+			indices.insert(indices.end(), { a, a + 1, b, a + 1, b + 1, b });
 		}
 }
 
 void Globe::Init(float radius)
 {
-	shader = new Shader("shaders/default.vert", "shaders/default.frag");
+	shader = new Shader("shaders/glass.vert", "shaders/glass.frag");
+	skyCubemap = CreateNightSkyCubemap();
+	skyBoxLocation = glGetUniformLocation(shader->ID, "skyBox");
+	reflectStrengthLocation = glGetUniformLocation(shader->ID, "reflectStrength");
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	std::vector<GLfloat> vertices;
 	std::vector<GLuint> indices;
@@ -62,13 +75,37 @@ void Globe::Init(float radius)
 
 void Globe::DrawGlass(GlassPass pass, const FrameContext& frame, Camera& camera)
 {
-	if (pass == GlassPass::Back) return;
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(pass == GlassPass::Back ? GL_FRONT : GL_BACK);
 
 	shader->Activate();
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
+	glUniform3fv(glGetUniformLocation(shader->ID, "camPos"), 1, glm::value_ptr(frame.camPos));
+	glUniform3fv(glGetUniformLocation(shader->ID, "lightDir"), 1, glm::value_ptr(GLASS_LIGHT_DIR));
+	glUniform3fv(glGetUniformLocation(shader->ID, "glassTint"), 1, glm::value_ptr(GLASS_TINT));
+	glUniform1f(glGetUniformLocation(shader->ID, "glassAlpha"), GLASS_ALPHA);
+	glUniform1f(reflectStrengthLocation,
+		frame.cameraInside ? CUBEMAP_STRENGTH_INSIDE : CUBEMAP_STRENGTH);
+
+	GLint previousUnit, previousCubemap;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &previousUnit);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &previousCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyCubemap);
+	glUniform1i(skyBoxLocation, 0);
 
 	sphereVAO->Bind();
 	glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, previousCubemap);
+	glActiveTexture(previousUnit);
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
 }

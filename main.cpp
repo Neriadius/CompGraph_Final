@@ -26,6 +26,8 @@ const int WINDOW_H = 600;
 // Globe size; the camera orbits around its centre.
 const glm::vec3 GLOBE_CENTER(0.0f, 0.0f, 0.0f);
 const float GLOBE_RADIUS = 1.0f;
+const float CAMERA_SOFT_RADIUS = 5.0f * GLOBE_RADIUS;   // easing starts here
+const float CAMERA_EASE_SPEED = 3.0f;                  // 1/seconds
 
 Camera* camera = nullptr;
 Shake shake;
@@ -94,6 +96,7 @@ void idle()
 	frameDt = dt;
 
 	shake.Update(dt);
+	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
 	snow.Update(frame);
 	glutPostRedisplay();

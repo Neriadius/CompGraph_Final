@@ -74,6 +74,7 @@ public:
 
 	void Resize(int newWidth, int newHeight);
 	void ToggleMode();
+	void ClampToSphere(const glm::vec3& center, float softRadius, float easeSpeed, float dt);
 
 private:
 	void UpdatePosition();                     // ORBIT: Position/Orientation from cylinder
