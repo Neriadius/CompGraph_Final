@@ -5,19 +5,20 @@
 // TODO (wow):     hard shake -> blizzard that slowly settles
 
 #include <iostream>
-#include <vector>
 #include <cmath>
 #include <filesystem>
 
 #include <glad/glad.h>
 #include <GL/freeglut.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include "src/shaderClass.h"
-#include "src/VAO.h"
-#include "src/VBO.h"
-#include "src/EBO.h"
 #include "src/Camera.h"
 #include "src/Shake.h"
+#include "src/FrameContext.h"
+#include "src/Scene.h"
+#include "src/Snow.h"
+#include "src/Globe.h"
 
 const int WINDOW_W = 800;
 const int WINDOW_H = 600;
@@ -27,63 +28,50 @@ const glm::vec3 GLOBE_CENTER(0.0f, 0.0f, 0.0f);
 const float GLOBE_RADIUS = 1.0f;
 
 Camera* camera = nullptr;
-Shader* shader = nullptr;
-VAO* sphereVAO = nullptr;
-GLsizei sphereIndexCount = 0;
 Shake shake;
-
-// ---------------------------------------------------------------
-// Simple UV sphere (position + normal, interleaved). Used as the globe for now.
-// ---------------------------------------------------------------
-void buildSphere(float radius, int stacks, int slices,
-                 std::vector<GLfloat>& vertices, std::vector<GLuint>& indices)
-{
-	const float PI = 3.14159265358979f;
-
-	for (int i = 0; i <= stacks; i++)
-	{
-		float phi = PI * i / stacks;                 // 0 (top) .. PI (bottom)
-		for (int j = 0; j <= slices; j++)
-		{
-			float theta = 2.0f * PI * j / slices;
-			float nx = std::sin(phi) * std::cos(theta);
-			float ny = std::cos(phi);
-			float nz = std::sin(phi) * std::sin(theta);
-
-			vertices.insert(vertices.end(), { nx * radius, ny * radius, nz * radius, nx, ny, nz });
-		}
-	}
-
-	for (int i = 0; i < stacks; i++)
-		for (int j = 0; j < slices; j++)
-		{
-			GLuint a = i * (slices + 1) + j;
-			GLuint b = a + slices + 1;
-			indices.insert(indices.end(), { a, b, a + 1, a + 1, b, b + 1 });
-		}
-}
+Scene scene;
+Snow snow;
+Globe globe;
+float frameDt = 0.0f;
 
 // ---------------------------------------------------------------
 // GLUT callbacks
 // ---------------------------------------------------------------
+FrameContext MakeFrame(float timeSeconds)
+{
+	FrameContext frame;
+	frame.dt = frameDt;
+	frame.time = timeSeconds;
+	frame.shakeIntensity = shake.intensity;
+	frame.camPos = camera->Position;
+	frame.cameraInside = glm::length(camera->Position - GLOBE_CENTER) < GLOBE_RADIUS;
+	frame.globeCenter = GLOBE_CENTER;
+	frame.globeRadius = GLOBE_RADIUS;
+
+	glm::vec3 jitter(
+		std::sin(timeSeconds * 47.0f),
+		std::sin(timeSeconds * 61.0f),
+		std::sin(timeSeconds * 53.0f));
+	frame.globeModel = glm::translate(glm::mat4(1.0f), jitter * (0.03f * shake.intensity));
+
+	return frame;
+}
+
 void display()
 {
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	FrameContext frame = MakeFrame(time);
+
 	glClearColor(0.05f, 0.06f, 0.1f, 1.0f);
+	// Restore depth writes so glClear clears the depth buffer.
+	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	shader->Activate();
-	camera->Matrix(45.0f, GLOBE_RADIUS * 0.01f, GLOBE_RADIUS * 50.0f, *shader, "camMatrix");
-
-	float t = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-	glm::vec3 jitter(
-		std::sin(t * 47.0f),
-		std::sin(t * 61.0f),
-		std::sin(t * 53.0f));
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), jitter * (0.03f * shake.intensity));
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-	sphereVAO->Bind();
-	glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+	// Glass is drawn back faces -> snow -> front faces so it works outside and inside the globe.
+	scene.DrawOpaque(frame, *camera);
+	globe.DrawGlass(GlassPass::Back, frame, *camera);
+	snow.Draw(frame, *camera);
+	globe.DrawGlass(GlassPass::Front, frame, *camera);
 
 	glutSwapBuffers();
 }
@@ -103,8 +91,11 @@ void idle()
 	float dt = (currentTime - lastTime) / 1000.0f;
 	if (dt > 0.1f) dt = 0.1f;
 	lastTime = currentTime;
+	frameDt = dt;
 
 	shake.Update(dt);
+	FrameContext frame = MakeFrame(currentTime / 1000.0f);
+	snow.Update(frame);
 	glutPostRedisplay();
 }
 
@@ -196,20 +187,9 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 
 	camera = new Camera(WINDOW_W, WINDOW_H, GLOBE_CENTER, GLOBE_RADIUS);
-	shader = new Shader("shaders/default.vert", "shaders/default.frag");
-
-	// Placeholder globe
-	std::vector<GLfloat> vertices;
-	std::vector<GLuint> indices;
-	buildSphere(GLOBE_RADIUS, 32, 48, vertices, indices);
-	sphereIndexCount = (GLsizei)indices.size();
-
-	sphereVAO = new VAO();
-	sphereVAO->Bind();
-	VBO vbo(vertices.data(), (GLsizeiptr)(vertices.size() * sizeof(GLfloat)));
-	EBO ebo(indices.data(), (GLsizeiptr)(indices.size() * sizeof(GLuint)));
-	sphereVAO->LinkAttrib(vbo, 0, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)0);
-	sphereVAO->LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	scene.Init();
+	snow.Init();
+	globe.Init(GLOBE_RADIUS);
 
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
