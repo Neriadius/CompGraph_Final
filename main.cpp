@@ -85,7 +85,7 @@ void reshape(int w, int h)
 	camera->Resize(w, h);
 	glutPostRedisplay();
 }
-
+//s
 void idle()
 {
 	static int lastTime = glutGet(GLUT_ELAPSED_TIME);
