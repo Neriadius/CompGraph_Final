@@ -2,6 +2,9 @@
 #define SNOW_H
 
 #include "FrameContext.h"
+#include <glad/glad.h>
+#include <random>
+#include <vector>
 
 class Camera;
 class Shader;
@@ -19,7 +22,27 @@ public:
 	void Draw(const FrameContext& frame, Camera& camera);
 
 private:
+	struct Particle
+	{
+		glm::vec3 pos, vel;
+		float size;
+		float phase;
+		float fallSpeed;
+		bool resting;
+	};
+
+	struct SnowVertex
+	{
+		float x, y, z, size, phase;
+	};
+
 	Shader* shader = nullptr;
+	std::vector<Particle> particles;
+	std::vector<SnowVertex> vertices;
+	GLuint vao = 0, vbo = 0;
+	bool radiusInitialized = false;
+	float agitation = 0.0f;
+	std::mt19937 rng;
 };
 
 #endif
