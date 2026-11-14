@@ -21,6 +21,7 @@ Current state: window + orbit/free camera + placeholder sphere.
     main.cpp       window, callbacks, placeholder sphere
     src/           Camera, Shader, VAO, VBO, EBO
     shaders/       GLSL files
+    textures/      images (PNG), loaded by src/Texture (uses src/Image)
     glad/, glm/    libraries
 
 ## Plan

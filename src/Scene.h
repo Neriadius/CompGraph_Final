@@ -1,10 +1,14 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <glad/glad.h>
+
 #include "FrameContext.h"
 
 class Camera;
 class Shader;
+class Texture;
+class VAO;
 
 // Owner: Person 3 + 4. Implement opaque interior and base rendering here.
 // DrawOpaque keeps depth writes ON.
@@ -16,6 +20,12 @@ public:
 
 private:
 	Shader* shader = nullptr;
+
+	// Wooden base (Person 4)
+	Shader* baseShader = nullptr;
+	Texture* woodTexture = nullptr;
+	VAO* baseVAO = nullptr;
+	GLsizei baseIndexCount = 0;
 };
 
 #endif
