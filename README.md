@@ -10,6 +10,7 @@ Current state: window + orbit/free camera + placeholder sphere.
     make run
 
 ## Controls
+    SPACE / left mouse   shake the globe (the winding key turns; the 3rd shake starts the music box)
     C              toggle ORBIT / FREE camera
     P              parallel / perspective
     ORBIT: arrows = angle / height, +/- = zoom
@@ -22,6 +23,7 @@ Current state: window + orbit/free camera + placeholder sphere.
     src/           Camera, Shader, VAO, VBO, EBO
     shaders/       GLSL files
     textures/      images (PNG), loaded by src/Texture (uses src/Image)
+    audio/         music_box.mp3 (tune), winding_key.mp3 (key sound); played by src/MusicBox
     glad/, glm/    libraries
 
 ## Plan

@@ -25,7 +25,7 @@ LDFLAGS  += -static
 LDLIBS   += -lfreeglut_static -lopengl32 -lwinmm -lgdi32
 else
 LDFLAGS  += -static-libgcc -static-libstdc++
-LDLIBS   += -lfreeglut -lopengl32
+LDLIBS   += -lfreeglut -lopengl32 -lwinmm
 endif
 
 TARGET  := snowglobe$(EXE)
@@ -34,7 +34,8 @@ HEADERS := $(wildcard src/*.h)
 
 OBJS := $(BUILD)/main.o $(BUILD)/glad.o \
         $(BUILD)/shaderClass.o $(BUILD)/VAO.o $(BUILD)/VBO.o $(BUILD)/EBO.o $(BUILD)/Camera.o \
-        $(BUILD)/Scene.o $(BUILD)/Snow.o $(BUILD)/Globe.o $(BUILD)/Cubemap.o $(BUILD)/Texture.o $(BUILD)/Image.o
+        $(BUILD)/Scene.o $(BUILD)/Snow.o $(BUILD)/Globe.o $(BUILD)/Cubemap.o $(BUILD)/Texture.o $(BUILD)/Image.o \
+        $(BUILD)/MusicBox.o $(BUILD)/WindingKey.o
 
 .PHONY: all run clean
 

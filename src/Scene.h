@@ -9,6 +9,7 @@ class Camera;
 class Shader;
 class Texture;
 class VAO;
+class WindingKey;
 
 // Owner: Person 3 + 4. Implement opaque interior and base rendering here.
 // DrawOpaque keeps depth writes ON.
@@ -26,6 +27,9 @@ private:
 	Texture* woodTexture = nullptr;
 	VAO* baseVAO = nullptr;
 	GLsizei baseIndexCount = 0;
+
+	// Winding key on the side of the base (Person 4)
+	WindingKey* windingKey = nullptr;
 };
 
 #endif

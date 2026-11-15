@@ -14,6 +14,7 @@
 #include "VBO.h"
 #include "EBO.h"
 #include "SceneConstants.h"
+#include "WindingKey.h"
 
 // ---------------------------------------------------------------
 // Wooden base (Person 4)
@@ -134,6 +135,9 @@ void Scene::Init()
 		baseVAO->LinkAttrib(vbo, 2, 2, GL_FLOAT, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 	}
 
+	windingKey = new WindingKey();
+	windingKey->Init();
+
 #if DEBUG_TEST_OBJECT
 	const float PI = 3.14159265358979f;
 	const int stacks = 16, slices = 24;
@@ -185,6 +189,9 @@ void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
 	woodTexture->Bind(0);
 	baseVAO->Bind();
 	glDrawElements(GL_TRIANGLES, baseIndexCount, GL_UNSIGNED_INT, 0);
+
+	// Winding key on the base: turns when the globe is shaken
+	windingKey->Draw(frame, camera);
 
 	// Rest of the opaque interior will be drawn here.
 	shader->Activate();

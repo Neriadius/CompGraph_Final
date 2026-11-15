@@ -1,7 +1,7 @@
 // Snow Globe - project skeleton: window + orbit camera + one placeholder sphere.
 //
 // TODO (core):    glass sphere with specular highlights, snow particles, wooden base
-// TODO (stretch): cubemap reflections, warm window lights, music box sound
+// TODO (stretch): cubemap reflections, warm window lights
 // TODO (wow):     hard shake -> blizzard that slowly settles
 
 #include <iostream>
@@ -19,9 +19,10 @@
 #include "src/Scene.h"
 #include "src/Snow.h"
 #include "src/Globe.h"
+#include "src/MusicBox.h"
 
-const int WINDOW_W = 800;
-const int WINDOW_H = 600;
+const int WINDOW_W = 1280;
+const int WINDOW_H = 720;
 
 // Globe size; the camera orbits around its centre.
 const glm::vec3 GLOBE_CENTER(0.0f, 0.0f, 0.0f);
@@ -34,6 +35,7 @@ Shake shake;
 Scene scene;
 Snow snow;
 Globe globe;
+MusicBox musicBox;
 float frameDt = 0.0f;
 
 // ---------------------------------------------------------------
@@ -96,6 +98,7 @@ void idle()
 	frameDt = dt;
 
 	shake.Update(dt);
+	musicBox.Update(shake.count, dt);       // key sound on each shake, music after the 3rd
 	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
 	snow.Update(frame);
@@ -191,6 +194,7 @@ int main(int argc, char** argv)
 
 	camera = new Camera(WINDOW_W, WINDOW_H, GLOBE_CENTER, GLOBE_RADIUS);
 	scene.Init();
+	musicBox.Init("audio/music_box.mp3", "audio/winding_key.mp3");
 	snow.Init();
 	globe.Init(GLOBE_RADIUS);
 
@@ -202,10 +206,12 @@ int main(int argc, char** argv)
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
-	std::cout << "C: orbit / free camera   P: projection   ESC: quit\n"
+	std::cout << "SPACE / left mouse: shake the globe (3 shakes start the music box)\n"
+		<< "C: orbit / free camera   P: projection   ESC: quit\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
 		<< "FREE : WASD move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
 
 	glutMainLoop();
+	musicBox.Shutdown();
 	return 0;
 }
