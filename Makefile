@@ -35,7 +35,9 @@ HEADERS := $(wildcard src/*.h)
 OBJS := $(BUILD)/main.o $(BUILD)/glad.o \
         $(BUILD)/shaderClass.o $(BUILD)/VAO.o $(BUILD)/VBO.o $(BUILD)/EBO.o $(BUILD)/Camera.o \
         $(BUILD)/Scene.o $(BUILD)/Snow.o $(BUILD)/Globe.o $(BUILD)/Cubemap.o $(BUILD)/Texture.o $(BUILD)/Image.o \
-        $(BUILD)/MusicBox.o $(BUILD)/WindingKey.o
+        $(BUILD)/MusicBox.o $(BUILD)/WindingKey.o \
+        $(BUILD)/SceneLights.o $(BUILD)/MeshBuilder.o $(BUILD)/InteriorModels.o $(BUILD)/HutModel.o \
+        $(BUILD)/Campfire.o $(BUILD)/Character.o $(BUILD)/Smoke.o $(BUILD)/Interior.o
 
 .PHONY: all run clean
 

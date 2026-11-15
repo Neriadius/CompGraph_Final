@@ -101,6 +101,7 @@ void idle()
 	musicBox.Update(shake.count, dt);       // key sound on each shake, music after the 3rd
 	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
+	scene.Update(frame);                    // interior: fire flicker, light fades
 	snow.Update(frame);
 	glutPostRedisplay();
 }
@@ -119,6 +120,9 @@ void keyboard(unsigned char key, int, int)
 
 	if (key == ' ')
 		shake.Impulse(0.6f);
+
+	if (scene.Inputs(key))                  // L = hut lights, F = campfire
+		return;
 
 	if (camera->Inputs(key))
 		glutPostRedisplay();
@@ -208,6 +212,7 @@ int main(int argc, char** argv)
 
 	std::cout << "SPACE / left mouse: shake the globe (3 shakes start the music box)\n"
 		<< "C: orbit / free camera   P: projection   ESC: quit\n"
+		<< "L: hut lights on/off   F: campfire on/off\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
 		<< "FREE : WASD move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
 

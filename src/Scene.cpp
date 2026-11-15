@@ -1,5 +1,3 @@
-#define DEBUG_TEST_OBJECT 1   // remove when the real interior is added
-
 #include "Scene.h"
 
 #include <cmath>
@@ -15,6 +13,7 @@
 #include "EBO.h"
 #include "SceneConstants.h"
 #include "WindingKey.h"
+#include "Interior.h"
 
 // ---------------------------------------------------------------
 // Wooden base (Person 4)
@@ -95,19 +94,6 @@ namespace
 	}
 }
 
-#if DEBUG_TEST_OBJECT
-#include <cmath>
-#include <vector>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include "VAO.h"
-#include "VBO.h"
-#include "EBO.h"
-
-static VAO* testVAO = nullptr;
-static GLsizei testIndexCount = 0;
-#endif
 
 void Scene::Init()
 {
@@ -138,39 +124,8 @@ void Scene::Init()
 	windingKey = new WindingKey();
 	windingKey->Init();
 
-#if DEBUG_TEST_OBJECT
-	const float PI = 3.14159265358979f;
-	const int stacks = 16, slices = 24;
-	std::vector<GLfloat> vertices;
-	std::vector<GLuint> indices;
-	for (int i = 0; i <= stacks; i++)
-	{
-		float phi = PI * i / stacks;
-		for (int j = 0; j <= slices; j++)
-		{
-			float theta = 2.0f * PI * j / slices;
-			// Constant normal gives a flat grey colour with the unchanged default shader.
-			vertices.insert(vertices.end(), {
-				0.3f * std::sin(phi) * std::cos(theta),
-				0.3f * std::cos(phi),
-				0.3f * std::sin(phi) * std::sin(theta), 0.0f, 1.0f, 0.0f });
-		}
-	}
-	for (int i = 0; i < stacks; i++)
-		for (int j = 0; j < slices; j++)
-		{
-			GLuint a = i * (slices + 1) + j;
-			GLuint b = a + slices + 1;
-			indices.insert(indices.end(), { a, a + 1, b, a + 1, b + 1, b });
-		}
-	testIndexCount = (GLsizei)indices.size();
-	testVAO = new VAO();
-	testVAO->Bind();
-	VBO vbo(vertices.data(), (GLsizeiptr)(vertices.size() * sizeof(GLfloat)));
-	EBO ebo(indices.data(), (GLsizeiptr)(indices.size() * sizeof(GLuint)));
-	testVAO->LinkAttrib(vbo, 0, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)0);
-	testVAO->LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-#endif
+	interior = new Interior();
+	interior->Init();
 }
 
 void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
@@ -193,12 +148,21 @@ void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
 	// Winding key on the base: turns when the globe is shaken
 	windingKey->Draw(frame, camera);
 
-	// Rest of the opaque interior will be drawn here.
-	shader->Activate();
-#if DEBUG_TEST_OBJECT
-	glm::mat4 model = glm::translate(frame.globeModel, glm::vec3(0.3f, -0.4f, 0.0f));
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	testVAO->Bind();
-	glDrawElements(GL_TRIANGLES, testIndexCount, GL_UNSIGNED_INT, 0);
-#endif
+	// Interior: ground, trees, hut, campfire, character (Person 3)
+	interior->Draw(frame, camera);
+}
+
+void Scene::Update(const FrameContext& frame)
+{
+	interior->Update(frame);
+}
+
+bool Scene::Inputs(unsigned char key)
+{
+	return interior->Inputs(key);
+}
+
+const SceneLights& Scene::Lights() const
+{
+	return interior->Lights();
 }
