@@ -13,7 +13,7 @@
 //
 //   Update(frame)   once per frame: fades, flicker, light positions (world space)
 //   Draw(frame)     opaque geometry, then the additive glow and sparks
-//   Inputs(key)     L = hut lights on/off, F = campfire on/off
+//   Inputs(key)     L = hut lights on/off, F = campfire on/off, I = day / night
 //   Lights()        all interior lights for other shaders (see SceneLights.h)
 
 #include <glm/glm.hpp>
@@ -61,6 +61,7 @@ private:
 	glm::mat4 globeModel = glm::mat4(1.0f);      // latest shake matrix
 
 	float windowLevel = 1.0f, windowTarget = 1.0f;
+	float dayLevel = 0.0f, dayTarget = 0.0f;        // 0 = night, 1 = day
 };
 
 #endif

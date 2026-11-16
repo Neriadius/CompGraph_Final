@@ -14,6 +14,7 @@
 namespace
 {
 	const float WINDOW_FADE_SECONDS = 0.8f;
+	const float DAY_FADE_SECONDS = 3.0f;           // sunrise / sunset
 
 	// Light colours (colour * intensity) and falloff, tuned for a globe of radius 1
 	const glm::vec3 FIRE_COLOR(1.00f, 0.50f, 0.18f);
@@ -77,6 +78,7 @@ bool Interior::Inputs(unsigned char key)
 	{
 	case 'l': case 'L': windowTarget = windowTarget > 0.5f ? 0.0f : 1.0f; return true;
 	case 'f': case 'F': campfire.Toggle(); return true;
+	case 'i': case 'I': dayTarget = dayTarget > 0.5f ? 0.0f : 1.0f; return true;
 	}
 	return false;
 }
@@ -89,6 +91,13 @@ void Interior::Update(const FrameContext& frame)
 	float step = frame.dt / WINDOW_FADE_SECONDS;
 	windowLevel = windowTarget > windowLevel ? std::min(windowTarget, windowLevel + step)
 	                                         : std::max(windowTarget, windowLevel - step);
+
+	// day / night: moon <-> sun, ambient, background (eased so it starts and ends softly)
+	float dayStep = frame.dt / DAY_FADE_SECONDS;
+	dayLevel = dayTarget > dayLevel ? std::min(dayTarget, dayLevel + dayStep) : std::max(dayTarget, dayLevel - dayStep);
+	const float day = dayLevel * dayLevel * (3.0f - 2.0f * dayLevel);
+	ApplyDaylight(lights, day);
+	const float lampScale = 1.0f - 0.5f * day;      // lamps matter less in daylight
 
 	// ---- light rig in world space (moves with the shaking globe) ----
 	auto world = [&](const glm::vec3& p) { return glm::vec3(globeModel * glm::vec4(p, 1.0f)); };
@@ -105,14 +114,14 @@ void Interior::Update(const FrameContext& frame)
 		PointLight& w = lights.points[n++];
 		float candle = 0.95f + 0.05f * std::sin(frame.time * 3.1f + 1.7f * i);     // gentle lamp flicker
 		w.position = world(anchors.windowLights[i]);
-		w.color = WINDOW_COLOR * WINDOW_INTENSITY * windowLevel * candle;
+		w.color = WINDOW_COLOR * WINDOW_INTENSITY * windowLevel * candle * lampScale;
 		w.softRadius = WINDOW_SOFT;
 		w.range = WINDOW_RANGE;
 	}
 
 	PointLight& lantern = lights.points[n++];
 	lantern.position = world(anchors.lantern);
-	lantern.color = WINDOW_COLOR * LANTERN_INTENSITY * windowLevel;
+	lantern.color = WINDOW_COLOR * LANTERN_INTENSITY * windowLevel * lampScale;
 	lantern.softRadius = LANTERN_SOFT;
 	lantern.range = LANTERN_RANGE;
 
@@ -133,15 +142,20 @@ void Interior::SetFrameUniforms(GLuint program, const FrameContext& frame, Camer
 	glUniform3fv(glGetUniformLocation(program, "camPos"), 1, glm::value_ptr(frame.camPos));
 	glUniform1f(glGetUniformLocation(program, "time"), frame.time);
 	UploadSceneLights(program, lights);
-	glUniform1f(glGetUniformLocation(program, "windowGlow"), windowLevel);
+	glUniform1f(glGetUniformLocation(program, "windowGlow"), windowLevel * (1.0f - 0.4f * lights.daylight));
 	glUniform1f(glGetUniformLocation(program, "fireGlow"), COAL_SMOULDER + campfire.Brightness());
 	glUniform3fv(glGetUniformLocation(program, "windowEmitColor"), 1, glm::value_ptr(WINDOW_EMIT));
 	glUniform3fv(glGetUniformLocation(program, "fireEmitColor"), 1, glm::value_ptr(FIRE_EMIT));
 }
 
-// Model matrix of an object standing on the snow: globe * translate * rotate * scale
+// Model matrix of an object standing on the snow: globe * translate * rotate * scale.
+// On a slope it is sunk a little deeper so the downhill side of the trunk does not float.
 static glm::mat4 OnGround(const glm::mat4& globe, float x, float z, float yaw, float scale, float sink = 0.0f)
 {
+	const float e = 0.01f;
+	float slope = std::hypot(layout::TerrainOffset(x + e, z) - layout::TerrainOffset(x - e, z),
+		layout::TerrainOffset(x, z + e) - layout::TerrainOffset(x, z - e)) / (2.0f * e);
+	sink += 0.03f * scale * slope;
 	glm::mat4 m = glm::translate(globe, glm::vec3(x, GROUND_Y_RATIO + layout::TerrainOffset(x, z) - sink, z));
 	m = glm::rotate(m, yaw, glm::vec3(0, 1, 0));
 	return glm::scale(m, glm::vec3(scale));
@@ -193,5 +207,6 @@ void Interior::Draw(const FrameContext& frame, Camera& camera)
 
 	// transparent effects last (no depth writes): fire glow + sparks, chimney smoke
 	campfire.DrawGlow(fireModel, camera, frame.time);
-	smoke.Draw(glm::vec3(frame.globeModel * glm::vec4(anchors.chimneyTop, 1.0f)), windowLevel, camera, frame.time);
+	smoke.Draw(glm::vec3(frame.globeModel * glm::vec4(anchors.chimneyTop, 1.0f)), windowLevel, lights.daylight,
+		camera, frame.time);
 }

@@ -18,7 +18,6 @@ const float CUBEMAP_STRENGTH = 0.6f;
 const float CUBEMAP_STRENGTH_INSIDE = 0.25f;
 const glm::vec3 GLASS_TINT(0.75f, 0.88f, 1.0f);
 // Temporary light direction; Person 4/3 will later feed real fire/window lights.
-const glm::vec3 GLASS_LIGHT_DIR = glm::normalize(glm::vec3(-0.4f, 0.8f, 0.5f));
 
 // ---------------------------------------------------------------
 // Simple UV sphere (position + normal, interleaved). Used as the globe for now.
@@ -87,7 +86,8 @@ void Globe::DrawGlass(GlassPass pass, const FrameContext& frame, Camera& camera)
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
 	glUniform3fv(glGetUniformLocation(shader->ID, "camPos"), 1, glm::value_ptr(frame.camPos));
-	glUniform3fv(glGetUniformLocation(shader->ID, "lightDir"), 1, glm::value_ptr(GLASS_LIGHT_DIR));
+	glUniform3fv(glGetUniformLocation(shader->ID, "lightDir"), 1, glm::value_ptr(frame.keyLightDir));
+	glUniform1f(glGetUniformLocation(shader->ID, "daylight"), frame.daylight);
 	glUniform3fv(glGetUniformLocation(shader->ID, "glassTint"), 1, glm::value_ptr(GLASS_TINT));
 	glUniform1f(glGetUniformLocation(shader->ID, "glassAlpha"), GLASS_ALPHA);
 	glUniform1f(reflectStrengthLocation,

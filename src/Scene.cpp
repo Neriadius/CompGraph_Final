@@ -138,9 +138,10 @@ void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
 	baseShader->Activate();
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *baseShader, "camMatrix");
 	glUniformMatrix4fv(glGetUniformLocation(baseShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
-	glUniform3f(glGetUniformLocation(baseShader->ID, "lightDir"), 0.4f, 1.0f, 0.6f);
-	glUniform3f(glGetUniformLocation(baseShader->ID, "lightColor"), 0.75f, 0.70f, 0.62f);
-	glUniform3f(glGetUniformLocation(baseShader->ID, "ambientColor"), 0.35f, 0.37f, 0.45f);
+	OutsideLightValues outside = OutsideLight(frame.daylight);     // same as before at night
+	glUniform3fv(glGetUniformLocation(baseShader->ID, "lightDir"), 1, glm::value_ptr(outside.dir));
+	glUniform3fv(glGetUniformLocation(baseShader->ID, "lightColor"), 1, glm::value_ptr(outside.color));
+	glUniform3fv(glGetUniformLocation(baseShader->ID, "ambientColor"), 1, glm::value_ptr(outside.ambient));
 	woodTexture->Bind(0);
 	baseVAO->Bind();
 	glDrawElements(GL_TRIANGLES, baseIndexCount, GL_UNSIGNED_INT, 0);

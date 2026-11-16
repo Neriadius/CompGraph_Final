@@ -6,6 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "SceneLights.h"   // OutsideLight(): day / night (Person 3)
+
 #include "Camera.h"
 #include "shaderClass.h"
 #include "VAO.h"
@@ -138,9 +140,10 @@ void WindingKey::Draw(const FrameContext& frame, Camera& camera)
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glUniform3f(glGetUniformLocation(shader->ID, "camPos"), frame.camPos.x, frame.camPos.y, frame.camPos.z);
-	glUniform3f(glGetUniformLocation(shader->ID, "lightDir"), 0.4f, 1.0f, 0.6f);
-	glUniform3f(glGetUniformLocation(shader->ID, "lightColor"), 0.75f, 0.70f, 0.62f);
-	glUniform3f(glGetUniformLocation(shader->ID, "ambientColor"), 0.35f, 0.37f, 0.45f);
+	OutsideLightValues outside = OutsideLight(frame.daylight);     // same as before at night
+	glUniform3fv(glGetUniformLocation(shader->ID, "lightDir"), 1, glm::value_ptr(outside.dir));
+	glUniform3fv(glGetUniformLocation(shader->ID, "lightColor"), 1, glm::value_ptr(outside.color));
+	glUniform3fv(glGetUniformLocation(shader->ID, "ambientColor"), 1, glm::value_ptr(outside.ambient));
 
 	vao->Bind();
 	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);

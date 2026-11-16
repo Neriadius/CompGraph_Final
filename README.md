@@ -3,7 +3,8 @@
 Glass snow globe with a tiny world inside. Shake it with a key or the mouse.
 
 Current state: glass globe, snow, wooden base with winding key, music box sound,
-interior scene (log hut, pine trees, snowman, campfire, Typhoeus sitting by the fire).
+interior scene (snowy mountains, log hut, pine trees, snowman, campfire, Typhoeus sitting
+by the fire), day / night.
 
 ## Build (MSYS2 UCRT64)
 
@@ -14,6 +15,7 @@ interior scene (log hut, pine trees, snowman, campfire, Typhoeus sitting by the 
     SPACE / left mouse   shake the globe (the winding key turns; the 3rd shake starts the music box)
     L              hut lights on / off (windows, lantern, chimney smoke fade)
     F              campfire on / off (flame, sparks and fire light fade)
+    I              day / night (sunrise / sunset over 3 seconds)
     C              toggle ORBIT / FREE camera
     P              parallel / perspective
     ORBIT: arrows = angle / height, +/- = zoom
@@ -31,7 +33,8 @@ interior scene (log hut, pine trees, snowman, campfire, Typhoeus sitting by the 
 
     Interior (Person 3):
     src/Interior          owns the interior: update, lights, toggles, drawing, model placement
-    src/InteriorLayout.h  positions of everything + height functions (shared with the snow)
+    src/InteriorLayout.h  positions of everything + terrain height map (mountains) + height functions
+                          (shared with the snow)
     src/ModelHeights.h    GENERATED top surfaces of the hut / pine models (tools/heights.py)
     src/InteriorModels    palette, snow ground, fire pit, seats (procedural)
     src/HutProps.cpp      lantern, woodpile, chopping stump, snow banks around the hut model
@@ -39,7 +42,7 @@ interior scene (log hut, pine trees, snowman, campfire, Typhoeus sitting by the 
     src/Campfire          flame tongues, sparks, glow, flicker
     src/Smoke             chimney smoke
     src/MeshBuilder       primitives (box, cylinder/cone, sphere, torus, grid) -> one VAO
-    src/SceneLights       interior lights for any shader (hand-off to Person 4)
+    src/SceneLights       interior lights for any shader (hand-off to Person 4), day / night values
     shaders/interior.frag Blinn-Phong, moon + 6 point lights, textures + cut-out, procedural bark/rings/stone/snow
     shaders/interior.vert procedural mesh;  shaders/model.vert  OBJ models (two-pose morph)
     shaders/flame.* embers.* glow.* smoke.*
@@ -48,7 +51,15 @@ interior scene (log hut, pine trees, snowman, campfire, Typhoeus sitting by the 
     tools/                Python scripts that converted the Sketchfab glTF files to models/
 
 ## Interior scene (Person 3)
-- Snow ground disc with drifts, a trodden path from the door to the fire and a scorched ring.
+- Terrain: snowy mountains around the back of the globe and a flat meadow in front. Gaussian
+  peaks made craggy by ridged noise (domain-warped), computed once into a 200 x 200 height map
+  that both the ground mesh and the snow use. The shader puts snow on gentle slopes and high up
+  and bare, layered rock on steep faces; mountain shadows for the moon and the sun are baked into
+  the ground vertices (ray march over the height map). Trees on slopes are sunk by the slope.
+- A trodden path from the door to the fire and a scorched ring around it.
+- Day / night (I): the key light swings from the moon to the sun with a warm dawn tint half way;
+  ambient, background colour, glass reflection (day sky), wooden base and brass key light,
+  chimney smoke colour and the lamps all follow `daylight` (0..1) in `SceneLights`.
 - Models (credited in CREDITS.md, converted from glTF to OBJ by `tools/`): snowy log hut, pine trees,
   shrubs and bare bushes, a snowman, and Typhoeus sitting on a log by the fire.
 - The hut window glass glows with the hut lights (L); a warm point light sits outside the window and

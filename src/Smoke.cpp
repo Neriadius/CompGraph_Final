@@ -9,7 +9,7 @@
 namespace
 {
 	const int PUFFS = 14;
-	const glm::vec3 SMOKE_COLOR(0.55f, 0.58f, 0.66f);
+	const glm::vec3 NIGHT_SMOKE(0.55f, 0.58f, 0.66f), DAY_SMOKE(0.86f, 0.87f, 0.90f);
 
 	// A program that failed to link must not be used: glUseProgram would fail and the
 	// previous program (e.g. the brass key) would draw our meshes instead.
@@ -29,7 +29,7 @@ void Smoke::Init()
 	glGenVertexArrays(1, &emptyVAO);
 }
 
-void Smoke::Draw(const glm::vec3& origin, float amount, Camera& camera, float time)
+void Smoke::Draw(const glm::vec3& origin, float amount, float daylight, Camera& camera, float time)
 {
 	if (amount <= 0.01f || !shaderOk) return;
 
@@ -48,7 +48,8 @@ void Smoke::Draw(const glm::vec3& origin, float amount, Camera& camera, float ti
 	glUniform1f(glGetUniformLocation(shader->ID, "time"), time);
 	glUniform1f(glGetUniformLocation(shader->ID, "amount"), amount);
 	glUniform1i(glGetUniformLocation(shader->ID, "puffCount"), PUFFS);
-	glUniform3fv(glGetUniformLocation(shader->ID, "smokeColor"), 1, glm::value_ptr(SMOKE_COLOR));
+	glm::vec3 color = glm::mix(NIGHT_SMOKE, DAY_SMOKE, daylight);
+	glUniform3fv(glGetUniformLocation(shader->ID, "smokeColor"), 1, glm::value_ptr(color));
 
 	glBindVertexArray(emptyVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6 * PUFFS);

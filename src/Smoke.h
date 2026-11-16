@@ -14,8 +14,8 @@ class Smoke
 {
 public:
 	void Init();
-	// origin = chimney top in world space, amount = 0..1
-	void Draw(const glm::vec3& origin, float amount, Camera& camera, float time);
+	// origin = chimney top in world space, amount = 0..1, daylight = 0 night .. 1 day
+	void Draw(const glm::vec3& origin, float amount, float daylight, Camera& camera, float time);
 
 private:
 	Shader* shader = nullptr;
