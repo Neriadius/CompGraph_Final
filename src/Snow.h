@@ -2,6 +2,7 @@
 #define SNOW_H
 
 #include "FrameContext.h"
+#include "Texture.h"
 #include <glad/glad.h>
 #include <random>
 #include <vector>
@@ -43,6 +44,8 @@ private:
 	bool radiusInitialized = false;
 	float agitation = 0.0f;
 	std::mt19937 rng;
+	Texture flakeTexture;
+	bool flakeTextureLoaded = false;
 };
 
 #endif

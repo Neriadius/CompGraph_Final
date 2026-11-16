@@ -27,3 +27,9 @@ Typhoeus is a character from *Arknights: Endfield* (Hypergryph / GRYPHLINE); the
 | Blinn-Phong lighting, point light attenuation (idea) | Joey de Vries, LearnOpenGL | https://learnopengl.com/Lighting/Advanced-Lighting | CC BY-NC 4.0 | shaders/interior.frag |
 
 The ground, campfire, seats, lantern, woodpile and stump are built in code from primitives.
+
+## Texture sources
+
+| Texture | Author | Link | License | Used in |
+|---------|--------|------|---------|---------|
+| Realistic Seamless Wood Texture (wood.png) | SpringySpringo | https://opengameart.org/content/realistic-seamless-wood-texture | CC0 | wooden base |)

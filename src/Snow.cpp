@@ -14,7 +14,8 @@
 #include "SceneConstants.h"
 #include "shaderClass.h"
 
-const int SNOW_COUNT = 6000;
+// Denser snowfall after a shake; one VBO upload and draw call for all flakes.
+const int SNOW_COUNT = 10000;
 const float SNOW_PI = 3.14159265358979f;
 const float SNOW_DISC_MARGIN = 0.95f;
 const float SNOW_SIZE_MIN = 0.008f, SNOW_SIZE_MAX = 0.018f;
@@ -45,6 +46,7 @@ const unsigned int SNOW_SEED = 42;
 void Snow::Init()
 {
 	shader = new Shader("shaders/snow.vert", "shaders/snow.frag");
+	flakeTextureLoaded = flakeTexture.Load("textures/snowflake.png", GL_CLAMP_TO_EDGE, false, true);
 	particles.resize(SNOW_COUNT);
 	vertices.resize(SNOW_COUNT);
 	agitation = 0.0f;
@@ -189,6 +191,8 @@ void Snow::Draw(const FrameContext& frame, Camera& camera)
 	glDepthMask(GL_FALSE);
 
 	shader->Activate();
+	Texture::Uniform(*shader, "flakeTex", 0);
+	flakeTexture.Bind(0);
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
 	float pointScale = glutGet(GLUT_WINDOW_HEIGHT) / (2.0f * std::tan(glm::radians(45.0f) / 2.0f));
@@ -215,6 +219,7 @@ void Snow::Draw(const FrameContext& frame, Camera& camera)
 	glDrawArrays(GL_POINTS, 0, (GLsizei)vertices.size());
 
 	glDepthMask(GL_TRUE);
+	flakeTexture.Unbind();
 	glDisable(GL_BLEND);
 	glDisable(GL_PROGRAM_POINT_SIZE);
 }
