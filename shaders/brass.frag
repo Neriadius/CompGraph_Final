@@ -7,9 +7,43 @@ out vec4 FragColor;
 
 uniform mat4 model;
 uniform vec3 camPos;
-uniform vec3 lightDir;       // direction TOWARDS the light (world space)
-uniform vec3 lightColor;
-uniform vec3 ambientColor;
+#define MAX_POINT_LIGHTS 6
+uniform vec3 moonDir, moonColor, skyAmbient, groundAmbient;
+uniform int pointCount;
+uniform vec3 pointPos[MAX_POINT_LIGHTS], pointColor[MAX_POINT_LIGHTS];
+uniform vec2 pointFalloff[MAX_POINT_LIGHTS];
+
+vec3 ambientLight(vec3 n)
+{
+    return mix(groundAmbient, skyAmbient, clamp(n.y * 0.5 + 0.5, 0.0, 1.0));
+}
+
+vec3 directLight(vec3 n, vec3 v, vec3 l, vec3 color, float shininess, float specStrength)
+{
+    float ndotl = max(dot(n, l), 0.0);
+    vec3 h = normalize(l + v);
+    float spec = ndotl > 0.0 ? pow(max(dot(n, h), 0.0), shininess) : 0.0;
+    return color * (ndotl + specStrength * spec);
+}
+
+vec3 sceneLighting(vec3 n, vec3 worldPos, float shininess, float specStrength)
+{
+    vec3 v = normalize(camPos - worldPos);
+    vec3 light = ambientLight(n) + directLight(n, v, normalize(moonDir), moonColor, shininess, specStrength);
+    for (int i = 0; i < pointCount && i < MAX_POINT_LIGHTS; ++i)
+    {
+        vec3 delta = pointPos[i] - worldPos;
+        float d = length(delta);
+        float r0 = max(pointFalloff[i].x, 0.001);
+        float range = max(pointFalloff[i].y, 0.001);
+        float fade = pow(clamp(1.0 - pow(d / range, 4.0), 0.0, 1.0), 2.0);
+        float attenuation = fade / (1.0 + pow(d / r0, 2.0));
+        if (d > 0.0001)
+            light += attenuation * directLight(n, v, delta / d, pointColor[i], shininess, specStrength);
+    }
+    return light;
+}
+
 
 // ---- value noise ----
 float hash(vec3 p)
@@ -66,10 +100,8 @@ void main()
 	grad -= nl * dot(grad, nl);                       // only the part along the surface
 	nl = normalize(nl - 0.0004 * grad);
 
-	vec3 n = normalize(mat3(model) * nl);
-	vec3 l = normalize(lightDir);
+	vec3 n = normalize(mat3(transpose(inverse(model))) * nl);
 	vec3 v = normalize(camPos - vWorldPos);
-	vec3 h = normalize(l + v);
 
 	// ---- colour ----
 	float blotch = fbm(p * 9.0);
@@ -85,23 +117,16 @@ void main()
 	              + smoothstep(0.94, 0.99, noise(vec3(p.x * 150.0, p.y * 150.0, p.z * 3.0)));
 	base += vec3(0.30, 0.26, 0.15) * scratch * 0.35;
 
-	// ---- lighting (metal: tinted reflections matter more than diffuse) ----
-	float diff = max(dot(n, l), 0.0);
-	float shininess = mix(90.0, 25.0, tarnish);                    // tarnished = duller
-	float spec = pow(max(dot(n, h), 0.0), shininess);
-	float broad = pow(max(dot(n, h), 0.0), 8.0);                   // wide soft sheen
+	// Shared light colours and flickering fire/window point lights.
+	float shininess = mix(90.0, 25.0, tarnish);   // tarnished = duller
+	vec3 lighting = sceneLighting(n, vWorldPos, shininess, 1.25);
 
+	// A subtle procedural reflection helps brass stay metallic in the dark.
 	vec3 r = reflect(-v, n);
-	// fake studio: dark floor, bright sky, one soft window light
 	vec3 env = mix(vec3(0.10, 0.07, 0.04), vec3(0.85, 0.90, 1.00), smoothstep(-0.3, 0.6, r.y));
-	env += vec3(1.0, 0.95, 0.85) * pow(max(dot(r, l), 0.0), 12.0);
 	float fresnel = 0.55 + 0.45 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
-
-	vec3 lit = base * (ambientColor * 0.6 + lightColor * diff * 0.45)
-	         + base * env * fresnel * (1.0 - tarnish * 0.6) * 0.85      // brass tints what it reflects
-	         + base * lightColor * broad * 0.35
-	         + base * pow(max(dot(n, v), 0.0), 3.0) * 0.30                // soft sheen when facing the viewer
-	         + vec3(1.0, 0.93, 0.70) * lightColor * spec * 1.3;
+	vec3 lit = base * lighting * 0.65
+	         + base * env * fresnel * (1.0 - tarnish * 0.6) * 0.45;
 
 	FragColor = vec4(lit, 1.0);
 }

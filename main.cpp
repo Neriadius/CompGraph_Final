@@ -5,6 +5,7 @@
 // TODO (wow):     hard shake -> blizzard that slowly settles
 
 #include <iostream>
+#include <cstdio>
 #include <cmath>
 #include <filesystem>
 
@@ -37,6 +38,8 @@ Snow snow;
 Globe globe;
 MusicBox musicBox;
 float frameDt = 0.0f;
+int fpsFrames = 0;
+int fpsLastTime = 0;
 
 // ---------------------------------------------------------------
 // GLUT callbacks
@@ -81,6 +84,21 @@ void display()
 	globe.DrawGlass(GlassPass::Front, frame, *camera);
 
 	glutSwapBuffers();
+
+	// Count rendered frames; refresh the title twice per second.
+	++fpsFrames;
+	int now = glutGet(GLUT_ELAPSED_TIME);
+	if (fpsLastTime == 0) fpsLastTime = now;
+	int elapsed = now - fpsLastTime;
+	if (elapsed >= 500)
+	{
+		float fps = 1000.0f * fpsFrames / elapsed;
+		char title[96];
+		std::snprintf(title, sizeof(title), "Snow Globe | FPS: %.1f", fps);
+		glutSetWindowTitle(title);
+		fpsFrames = 0;
+		fpsLastTime = now;
+	}
 }
 
 void reshape(int w, int h)
@@ -186,7 +204,8 @@ int main(int argc, char** argv)
 
 	glutInitContextVersion(3, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
+	glutSetOption(GLUT_MULTISAMPLE, 4); // Request four samples; actual support depends on driver.
 	glutInitWindowSize(WINDOW_W, WINDOW_H);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Snow Globe");
@@ -198,6 +217,10 @@ int main(int argc, char** argv)
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	GLint actualSamples = 0;
+	glGetIntegerv(GL_SAMPLES, &actualSamples);
+	std::cout << "MSAA samples: " << actualSamples << std::endl;
 
 	camera = new Camera(WINDOW_W, WINDOW_H, GLOBE_CENTER, GLOBE_RADIUS);
 	scene.Init();

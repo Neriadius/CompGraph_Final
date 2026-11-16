@@ -122,7 +122,7 @@ void WindingKey::Init()
 	vao->LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 }
 
-void WindingKey::Draw(const FrameContext& frame, Camera& camera)
+void WindingKey::Draw(const FrameContext& frame, Camera& camera, const SceneLights& lights)
 {
 	// The harder the shake, the faster the key turns
 	angle += TURN_SPEED * frame.shakeIntensity * frame.dt;
@@ -140,6 +140,7 @@ void WindingKey::Draw(const FrameContext& frame, Camera& camera)
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glUniform3f(glGetUniformLocation(shader->ID, "camPos"), frame.camPos.x, frame.camPos.y, frame.camPos.z);
+	UploadSceneLights(shader->ID, lights);
 	OutsideLightValues outside = OutsideLight(frame.daylight);     // same as before at night
 	glUniform3fv(glGetUniformLocation(shader->ID, "lightDir"), 1, glm::value_ptr(outside.dir));
 	glUniform3fv(glGetUniformLocation(shader->ID, "lightColor"), 1, glm::value_ptr(outside.color));
