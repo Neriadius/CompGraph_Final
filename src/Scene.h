@@ -12,6 +12,7 @@ class Shader;
 class Texture;
 class VAO;
 class WindingKey;
+class Nameplate;
 
 // Owner: Person 3 + 4. Implement opaque interior and base rendering here.
 // DrawOpaque keeps depth writes ON.
@@ -37,6 +38,9 @@ private:
 
 	// Winding key on the side of the base (Person 4)
 	WindingKey* windingKey = nullptr;
+
+	// Metal title plate on the front of the wooden base
+	Nameplate* nameplate = nullptr;
 
 	// Ground, trees, hut, campfire, character (Person 3)
 	Interior* interior = nullptr;

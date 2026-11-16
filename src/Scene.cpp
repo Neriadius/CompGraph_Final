@@ -13,6 +13,7 @@
 #include "EBO.h"
 #include "SceneConstants.h"
 #include "WindingKey.h"
+#include "Nameplate.h"
 #include "Interior.h"
 
 // ---------------------------------------------------------------
@@ -121,6 +122,9 @@ void Scene::Init()
 		baseVAO->LinkAttrib(vbo, 2, 2, GL_FLOAT, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 	}
 
+	nameplate = new Nameplate();
+	nameplate->Init();
+
 	windingKey = new WindingKey();
 	windingKey->Init();
 
@@ -143,6 +147,9 @@ void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
 	woodTexture->Bind(0);
 	baseVAO->Bind();
 	glDrawElements(GL_TRIANGLES, baseIndexCount, GL_UNSIGNED_INT, 0);
+
+	// Curved metal nameplate follows the base and receives the shared lights.
+	nameplate->Draw(frame, camera, Lights());
 
 	// Winding key on the base: turns when the globe is shaken
 	windingKey->Draw(frame, camera, Lights());
