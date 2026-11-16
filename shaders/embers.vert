@@ -1,7 +1,6 @@
 #version 330 core
 
-// Sparks rising from the campfire (Person 3). No vertex buffer: every spark's path is
-// computed from gl_VertexID and time, so nothing is uploaded per frame.
+// Sparks rising from the campfire. Every spark's path is computed from gl_VertexID and time.
 
 uniform mat4 camMatrix;
 uniform mat4 model;                      // fire space -> world
@@ -11,7 +10,7 @@ uniform float pointScale;                // viewport height / (2 tan(fov / 2))
 
 out float vLife;                         // 1 = just born, 0 = burnt out
 
-float hash(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
+float hash(float n) { return fract(sin(n * 13) * 43758); }
 
 void main()
 {

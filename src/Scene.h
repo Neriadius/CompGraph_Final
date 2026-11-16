@@ -14,8 +14,6 @@ class VAO;
 class WindingKey;
 class Nameplate;
 
-// Owner: Person 3 + 4. Implement opaque interior and base rendering here.
-// DrawOpaque keeps depth writes ON.
 class Scene
 {
 public:

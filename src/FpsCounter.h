@@ -25,7 +25,7 @@ private:
     int frames = 0;
     int lastSample = -1;
     float fps = 0.0f;
-    bool visible = false; // Press ';' once to show both counters.
+    bool visible = true;  // Shown from the start (R7); ';' hides / shows both counters.
 };
 
 #endif

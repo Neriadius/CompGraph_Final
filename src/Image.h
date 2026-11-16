@@ -1,7 +1,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-// Small image loader (PNG, PPM) with its own inflate decoder - no external image library.
+// Small image loader (PNG, PPM) with its own inflate decoder
 
 #include <string>
 #include <vector>

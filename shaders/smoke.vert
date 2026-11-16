@@ -1,11 +1,10 @@
 #version 330 core
 
-// Chimney smoke (Person 3): puffs rise, grow, drift with a light wind and fade.
-// No vertex buffer: puff = gl_VertexID / 6, corner = gl_VertexID % 6 (two triangles
-// facing the camera), so nothing is uploaded per frame.
+// Chimney smoke
+// puff = gl_VertexID / 6, corner = gl_VertexID % 6 (two triangles facing the camera)
 
 uniform mat4 camMatrix;
-uniform vec3 origin;                     // top of the chimney (world space)
+uniform vec3 origin;                     // top of the chimney
 uniform vec3 camRight;
 uniform vec3 camUp;
 uniform float time;
@@ -24,8 +23,8 @@ void main()
 	vec2 c = CORNERS[gl_VertexID % 6];
 	float id = float(puff);
 
-	const float PERIOD = 5.0;                                    // seconds from chimney to fade
-	float age = fract(time / PERIOD + id / float(puffCount));    // evenly spread along the plume
+	const float PERIOD = 5.0;                                    // seconds from chimney to fade evenly spread along the plume
+	float age = fract(time / PERIOD + id / float(puffCount));
 
 	vec3 wind = vec3(0.07, 0.0, -0.04) * age * age;              // bends the plume over
 	vec3 wobble = 0.012 * age * vec3(sin(time * 0.8 + id * 2.1), 0.0, cos(time * 0.7 + id * 1.3));

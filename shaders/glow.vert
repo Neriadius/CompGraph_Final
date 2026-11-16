@@ -1,6 +1,6 @@
 #version 330 core
 
-// Camera-facing quad (4 vertices from gl_VertexID, no buffer) for the soft glow
+// Camera-facing quad (4 vertices from gl_VertexID) for the soft glow
 // around the campfire flame and the lantern.
 
 uniform mat4 camMatrix;

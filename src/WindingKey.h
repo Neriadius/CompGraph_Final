@@ -10,9 +10,9 @@ class Camera;
 class Shader;
 class VAO;
 
-// Brass music-box winding key sticking out of the side of the wooden base (Person 4).
+// Brass music-box winding key sticking out of the side of the wooden base
 // It turns while the globe is shaken (speed follows frame.shakeIntensity)
-// and shakes together with the globe (frame.globeModel).
+// and shakes together with the globe (frame.globeModel)
 class WindingKey
 {
 public:

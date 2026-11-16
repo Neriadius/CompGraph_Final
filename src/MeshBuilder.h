@@ -1,11 +1,8 @@
 #ifndef MESH_BUILDER_H
 #define MESH_BUILDER_H
 
-// Builds meshes out of primitives (box, cylinder/cone, sphere, torus, grid)
-// for the interior of the globe (Person 3). Every primitive takes a transform `xf`
-// (local -> mesh space), so parts can be placed, rotated and scaled freely and many parts
-// end up in ONE vertex buffer = one draw call.
-//
+// Builds meshes out of primitives (box, cylinder/cone, sphere, torus, grid) for the interior of the globe
+
 // Vertex layout (17 floats), matches shaders/interior.vert:
 //   0 position(3)  1 normal(3)  2 colour(3)  3 uv(2)
 //   4 material(4) = specular strength, shininess, pattern id, pattern amount
@@ -19,7 +16,7 @@
 
 class VAO;
 
-// Procedural surface patterns, computed in shaders/interior.frag (no texture files)
+// Procedural surface patterns, computed in shaders/interior.frag
 enum Pattern
 {
 	PAT_NONE = 0,

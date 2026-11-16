@@ -15,3 +15,13 @@ snow height maps. Only needed to redo the models; the program itself just reads 
   pose 0 and pose 1 with the same mesh for the morph animation in `shaders/model.vert`
 - `heights.py`       casts rays down onto the hut and trees (ignores transparent texture pixels)
   and writes `src/ModelHeights.h`, used by `SurfaceHeightAt` so snow rests on roof and branches
+
+## Menu font atlas
+
+`make_font_atlas.py` (needs numpy, scipy and Pillow with raqm) bakes the menu fonts into a signed
+distance field atlas: `textures/ui_font.png` (glyphs) and `textures/ui_font.txt` (glyph boxes,
+advances, kerning), read by `src/UiFont`. Fonts: Cormorant Garamond SemiBold (title) and Inter
+Medium / SemiBold (text), both SIL Open Font License, e.g. from `npm pack @fontsource/cormorant-garamond @fontsource/inter`.
+
+    python3 tools/make_font_atlas.py cormorant-garamond-latin-600-normal.woff \
+        inter-latin-500-normal.woff inter-latin-600-normal.woff textures/ui_font.png textures/ui_font.txt

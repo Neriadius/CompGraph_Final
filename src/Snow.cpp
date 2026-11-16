@@ -1,5 +1,4 @@
 // Tune SNOW_COUNT, sizes, lift, turbulence and agitation below for density and motion.
-// Person 3 can extend SurfaceHeightAt in SceneConstants.h for hut and trees.
 #define SNOW_DEBUG_START_AIRBORNE 0
 
 #include "Snow.h"

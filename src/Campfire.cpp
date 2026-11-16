@@ -55,8 +55,6 @@ namespace
 			+ 0.05f * std::sin(23.7f * t + 0.4f) + 0.04f * std::sin(37.9f * t + 2.1f);
 	}
 
-	// A program that failed to link must not be used: glUseProgram would fail and the
-	// previous program (e.g. the brass key) would draw our meshes instead.
 	bool Linked(const Shader* s, const char* name)
 	{
 		GLint ok = GL_FALSE;
@@ -152,7 +150,6 @@ void Campfire::DrawGlow(const glm::mat4& fireModel, Camera& camera, float time)
 	glDepthMask(GL_FALSE);
 	glBindVertexArray(emptyVAO);
 
-	// soft glow: billboard pulled a little towards the camera so the ground does not cut it
 	glm::vec3 centre = glm::vec3(fireModel * glm::vec4(0.0f, 0.05f, 0.0f, 1.0f));
 	glm::vec3 toCam = camera.Position - centre;
 	float dist = glm::length(toCam);

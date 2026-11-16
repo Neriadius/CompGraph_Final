@@ -1,9 +1,9 @@
 #ifndef INTERIOR_MODELS_H
 #define INTERIOR_MODELS_H
 
-// Procedural geometry of the globe interior (Person 3), built from primitives into one mesh:
+// Procedural geometry of the globe interior, built from primitives into one mesh:
 // snow ground, fire pit, seats, and props around the hut (HutProps.cpp).
-// Built once at start-up in globe space (radius 1, centre at the origin).
+
 // The hut, trees, snowman and Typhoeus are OBJ models (models/, drawn by Interior.cpp).
 
 #include <vector>
@@ -23,7 +23,7 @@ namespace palette
 	Material Plain(const glm::vec3& color, float spec = 0.06f, float shininess = 12.0f);
 }
 
-// Where the lights sit, filled while the geometry is built (globe space, no shake)
+// Where the lights sit, filled while the geometry is built
 struct InteriorAnchors
 {
 	std::vector<glm::vec3> windowLights;     // just outside the hut's window

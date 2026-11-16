@@ -1,8 +1,6 @@
 #version 330 core
 
-// Flame colour: hot (white-yellow) where the surface faces the viewer, cooler (orange-red)
-// at the silhouette and towards the tips, so the flame looks like it has a hot core
-// from every side. Noise eats the tips away to make them ragged.
+// Flame colour: hot (white-yellow) where the surface faces the viewer, cooler (orange-red) at the silhouette and towards the tips
 
 in vec3 vWorldPos;
 in vec3 vNormal;
@@ -13,7 +11,7 @@ out vec4 FragColor;
 
 uniform vec3 camPos;
 uniform float time;
-uniform vec3 fireOrigin;                 // world position of the fire's centre (noise space)
+uniform vec3 fireOrigin;                 // world position of the fire's centre
 
 float hash13(vec3 p3)
 {

@@ -1,6 +1,4 @@
-// Props around the hut model (Person 3): lantern by the door, woodpile and chopping stump
-// at the back, snow banked against the walls. The hut itself is models/hut/hut.obj
-// (drawn by Interior.cpp with the same placement matrix, HutMatrix()).
+// Props around the hut model: lantern by the door, woodpile and chopping stump and snow banked against the walls
 
 #include "InteriorModels.h"
 
@@ -98,7 +96,7 @@ void BuildHutProps(MeshBuilder& mb, InteriorAnchors& anchors)
 	anchors.windowLights.push_back(glm::vec3(hut * glm::vec4(WINDOW_LIGHT[0], WINDOW_LIGHT[1], WINDOW_LIGHT[2], 1.0f)));
 	anchors.chimneyTop = glm::vec3(hut * glm::vec4(CHIMNEY_TOP[0], CHIMNEY_TOP[1] + 0.012f, CHIMNEY_TOP[2], 1.0f));
 
-	// snow banked against the walls (not in front of the door or under the window)
+	// snow banked against the walls
 	Material snow = palette::Snow();
 	struct Bank { const glm::mat4* wall; float u, w; };
 	const Bank banks[] = {

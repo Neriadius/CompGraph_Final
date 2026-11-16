@@ -1,4 +1,4 @@
-// Implementations of the two single-header libraries used to load models (Person 3).
+// Implementations of the two single-header libraries used to load models
 // Each header is compiled once, here.
 //   tinyobjloader  - MIT,           https://github.com/tinyobjloader/tinyobjloader
 //   stb_image      - public domain, https://github.com/nothings/stb

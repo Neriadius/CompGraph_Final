@@ -13,8 +13,6 @@ class VBO;
 
 enum class GlassPass { Back, Front };
 
-// Owner: Person 1. Implement the glass sphere passes here.
-// Back will render back faces and Front will render front faces.
 class Globe
 {
 public:

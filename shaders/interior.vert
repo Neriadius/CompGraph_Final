@@ -1,7 +1,7 @@
 #version 330 core
 
-// Interior of the globe (Person 3): ground, trees, hut, campfire stones, character.
-// Vertex layout is written by src/MeshBuilder.
+// Interior of the globe: ground, trees, hut, campfire stones, character
+// Vertex layout is written by src/MeshBuilder
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;

@@ -1,18 +1,7 @@
 #ifndef INTERIOR_LAYOUT_H
 #define INTERIOR_LAYOUT_H
 
-// Where everything inside the globe stands (Person 3).
-// One place for the numbers, used by BOTH the drawing (Interior.cpp, InteriorModels.cpp,
-// HutProps.cpp) and the snow (SurfaceHeightAt in SceneConstants.h), so flakes settle exactly
-// on the drifts, the hut roof and the pine branches.
-//
-// Units: globe radius = 1, origin = globe centre. Heights here are OFFSETS above the
-// flat ground level (GROUND_Y_RATIO in SceneConstants.h). The OBJ models in models/ are
-// already in these units (base at y = 0, facing +Z), see tools/convert_static.py.
-//
-// Terrain: snowy mountains around the back of the globe, a flat meadow in front where the
-// hut, campfire and characters stand. Computed ONCE into a height map (TerrainField) that
-// both the ground mesh and the snow sample, so they always agree.
+// Terrain: snowy mountains around the back of the globe, a flat meadow in front where the hut, campfire and character stand
 
 #include <algorithm>
 #include <cmath>
@@ -26,7 +15,7 @@ namespace layout
 	constexpr float PI = 3.14159265358979f;
 	constexpr float DEG = PI / 180.0f;
 
-	// ---- ground ----
+	// ground
 	constexpr float GROUND_DISC_R = 0.826f;      // just inside the glass at ground level
 	constexpr float REST_LIFT = 0.008f;          // flakes rest this much above a visible surface
 
@@ -39,7 +28,7 @@ namespace layout
 		{ 0.38f, 0.55f, 0.13f, 0.020f },
 	};
 
-	// mountains: gaussian peaks, made craggy by ridged noise (see Mountains())
+	// mountains: gaussian peaks, made craggy by ridged noise (Mountains())
 	struct Peak { float x, z, height, radius; };
 	inline constexpr Peak PEAKS[] = {
 		{ 0.02f, -0.60f, 0.70f, 0.30f },      // main summit behind the hut
@@ -53,7 +42,7 @@ namespace layout
 		{ 0.60f, 0.46f, 0.10f, 0.15f },
 	};
 
-	// ---- hut (models/hut/hut.obj). Local frame: door on +Z (front), window on +X ----
+	// hut (models/hut/hut.obj). Local frame: door on +Z (front), window on +X
 	constexpr float HUT_X = -0.26f, HUT_Z = -0.10f;
 	constexpr float HUT_YAW = 38.0f * DEG;        // turns the door towards the campfire
 	constexpr float HUT_SINK = 0.012f;            // floor level with the snow
@@ -64,14 +53,13 @@ namespace layout
 	inline constexpr float WINDOW_LIGHT[3] = { 0.209f, 0.154f, 0.0f };
 	inline constexpr float CHIMNEY_TOP[3] = { -0.010f, 0.392f, -0.113f };
 
-	// ---- campfire, seat, Typhoeus ----
+	// campfire, seat, Typhoeus
 	constexpr float FIRE_X = 0.10f, FIRE_Z = 0.24f;
 	constexpr float CHAR_X = 0.185f, CHAR_Z = 0.11f;                // seat log centre
 	constexpr float CHAR_YAW = -32.0f * DEG;                        // faces the fire
 	constexpr float STUMP_X = -0.05f, STUMP_Z = 0.30f;              // second seat with a mug
 	constexpr float SNOWMAN_X = -0.40f, SNOWMAN_Z = 0.42f, SNOWMAN_YAW = 30.0f * DEG;
 
-	// places that must stay flat (the mountains and drifts fade out around them)
 	struct FlatSpot { float x, z, radius; };
 	inline constexpr FlatSpot FLAT[] = {
 		{ HUT_X, HUT_Z, 0.38f },
@@ -79,7 +67,7 @@ namespace layout
 		{ SNOWMAN_X, SNOWMAN_Z, 0.10f },
 	};
 
-	// ---- trees (models/trees): snow rests on the pines and shrubs, not on the bare bushes ----
+	// trees (models/trees): snow rests on the pines and shrubs
 	enum TreeModel { PINE = 0, PINE_TALL = 1, SHRUB = 2 };
 	struct TreeSpot { float x, z, scale, yawDeg; int model; };
 	inline constexpr TreeSpot TREES[] = {
@@ -103,16 +91,14 @@ namespace layout
 		{ 0.22f, 0.68f, 0.7f, 250.0f },
 	};
 
-	// ---------------------------------------------------------------
 	// Height functions (offsets above GROUND_Y)
-	// ---------------------------------------------------------------
 	inline float Smooth(float e0, float e1, float x)
 	{
 		float t = std::clamp((x - e0) / (e1 - e0), 0.0f, 1.0f);
 		return t * t * (3.0f - 2.0f * t);
 	}
 
-	// cos / sin of the hut's yaw, computed once
+	// cos / sin of the hut's yaw
 	inline const float HUT_COS = std::cos(HUT_YAW);
 	inline const float HUT_SIN = std::sin(HUT_YAW);
 
@@ -131,7 +117,7 @@ namespace layout
 		z = HUT_Z - HUT_SIN * lx + HUT_COS * lz;
 	}
 
-	// ---- noise for the mountain crags (integer hash, same result on every compiler) ----
+	// Noise for the mountain crags (integer hash, same result on every compiler)
 	inline float Hash2(int x, int z)
 	{
 		uint32_t h = (uint32_t)x * 374761393u + (uint32_t)z * 668265263u;
@@ -194,7 +180,7 @@ namespace layout
 		return (mountains + drifts) * (1.0f - flat) * rim;
 	}
 
-	// The height map: GRID x GRID samples over the ground disc, built on first use
+	// The height map: GRID x GRID samples over the ground disc
 	constexpr int TERRAIN_GRID = 200;
 	constexpr float TERRAIN_HALF = 0.84f;
 	inline const std::vector<float>& TerrainField()

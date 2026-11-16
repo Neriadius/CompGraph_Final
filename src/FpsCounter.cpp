@@ -5,47 +5,16 @@
 #include <cstring>
 #include <vector>
 
+#include "PixelFont.h"
 #include "shaderClass.h"
 
 namespace
 {
-constexpr int GLYPH_WIDTH = 5;
-constexpr int GLYPH_HEIGHT = 7;
+constexpr int GLYPH_WIDTH = pixelfont::GLYPH_W;   // shared 5x7 font (src/PixelFont)
+constexpr int GLYPH_HEIGHT = pixelfont::GLYPH_H;
 constexpr int PIXEL_SCALE = 3;
 constexpr int TEXT_X = 22;
 constexpr int TEXT_Y = 21;
-
-// Five-by-seven pixel glyphs, top row first. Enough for "FPS: 123.4".
-const std::uint8_t* Glyph(char character)
-{
-    static const std::uint8_t numbers[10][7] = {
-        {14,17,19,21,25,17,14}, // 0
-        { 4,12, 4, 4, 4, 4,14}, // 1
-        {14,17, 1, 2, 4, 8,31}, // 2
-        {30, 1, 1,14, 1, 1,30}, // 3
-        { 2, 6,10,18,31, 2, 2}, // 4
-        {31,16,30, 1, 1,17,14}, // 5
-        { 6, 8,16,30,17,17,14}, // 6
-        {31, 1, 2, 4, 8, 8, 8}, // 7
-        {14,17,17,14,17,17,14}, // 8
-        {14,17,17,15, 1, 2,12}  // 9
-    };
-    static const std::uint8_t letterF[7] = {31,16,16,30,16,16,16};
-    static const std::uint8_t letterP[7] = {30,17,17,30,16,16,16};
-    static const std::uint8_t letterS[7] = {15,16,16,14, 1, 1,30};
-    static const std::uint8_t colon[7] = {0,4,4,0,4,4,0};
-    static const std::uint8_t dot[7] = {0,0,0,0,0,6,6};
-    static const std::uint8_t empty[7] = {0,0,0,0,0,0,0};
-    if (character >= '0' && character <= '9') return numbers[character - '0'];
-    switch (character) {
-    case 'F': return letterF;
-    case 'P': return letterP;
-    case 'S': return letterS;
-    case ':': return colon;
-    case '.': return dot;
-    default: return empty;
-    }
-}
 
 // Append two triangles for a rectangle in window pixel coordinates.
 void AddRect(std::vector<float>& vertices, float x0, float y0, float x1, float y1, int w, int h)
@@ -111,7 +80,7 @@ void FpsCounter::Draw(int width, int height) const
 
     for (int i = 0; i < n; ++i)
     {
-        const std::uint8_t* glyph = Glyph(text[i]);
+        const std::uint8_t* glyph = pixelfont::Glyph(text[i]);
         for (int y = 0; y < GLYPH_HEIGHT; ++y)
             for (int x = 0; x < GLYPH_WIDTH; ++x)
                 if ((glyph[y] & (1 << (GLYPH_WIDTH - 1 - x))) != 0)

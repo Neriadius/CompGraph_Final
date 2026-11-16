@@ -201,7 +201,7 @@ void MeshBuilder::Grid(int rows, int cols, bool wrapCols, const std::function<gl
 			local.insert(local.end(), { a, d, c, a, b, d });
 		}
 
-	// Area-weighted face normals summed per vertex (also handles a collapsed centre row)
+	// Area-weighted face normals summed per vertex
 	for (size_t k = 0; k < local.size(); k += 3)
 	{
 		glm::vec3 fn = glm::cross(p[local[k + 1]] - p[local[k]], p[local[k + 2]] - p[local[k]]);
@@ -277,7 +277,7 @@ void GpuMesh::Upload(const MeshBuilder& mesh)
 	vao->LinkAttrib(vbo, 3, 2, GL_FLOAT, stride, (void*)(9 * sizeof(GLfloat)));
 	vao->LinkAttrib(vbo, 4, 4, GL_FLOAT, stride, (void*)(11 * sizeof(GLfloat)));
 	vao->LinkAttrib(vbo, 5, 2, GL_FLOAT, stride, (void*)(15 * sizeof(GLfloat)));
-	vao->Unbind();                       // so later EBO creation cannot change this VAO
+	vao->Unbind();
 }
 
 void GpuMesh::Draw() const

@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-// ---------------------------------------------------------------
 // Backend: Windows MCI, or a printing stub on other systems
-// ---------------------------------------------------------------
 #ifdef _WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -88,7 +86,6 @@ namespace
 
 #endif
 
-// ---------------------------------------------------------------
 namespace
 {
 	const int VOLUME_MUSIC = 600;      // 0..1000

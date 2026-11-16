@@ -28,8 +28,6 @@ namespace
 	const glm::vec3 FIRE_EMIT(1.00f, 0.38f, 0.08f);
 	const float COAL_SMOULDER = 0.12f;   // coals still glow a little when the fire is out
 
-	// A program that failed to link must not be used: glUseProgram would fail and the
-	// previous program (e.g. the brass key) would draw our meshes instead.
 	bool Linked(const Shader* s, const char* name)
 	{
 		GLint ok = GL_FALSE;

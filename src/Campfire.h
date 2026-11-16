@@ -1,11 +1,10 @@
 #ifndef CAMPFIRE_H
 #define CAMPFIRE_H
 
-// Animated part of the campfire (Person 3): flame tongues, rising sparks and a soft glow.
+// Animated part of the campfire: flame tongues, rising sparks and a soft glow.
 // The logs, stones and coals are static geometry (InteriorModels.cpp).
-//
-// Flicker: one function of time drives the flame stretch, the coal glow and the fire's
-// point light, so light and flame always pulse together.
+
+// Flicker: one function of time drives the flame stretch, the coal glow and the fire's point light
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
