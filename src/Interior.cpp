@@ -8,6 +8,7 @@
 
 #include "Camera.h"
 #include "InteriorLayout.h"
+#include "SceneConstants.h"
 #include "shaderClass.h"
 
 namespace
@@ -18,7 +19,7 @@ namespace
 	const glm::vec3 FIRE_COLOR(1.00f, 0.50f, 0.18f);
 	const float FIRE_INTENSITY = 2.6f, FIRE_SOFT = 0.15f, FIRE_RANGE = 0.85f;
 	const glm::vec3 WINDOW_COLOR(1.00f, 0.66f, 0.32f);
-	const float WINDOW_INTENSITY = 1.3f, WINDOW_SOFT = 0.08f, WINDOW_RANGE = 0.36f;
+	const float WINDOW_INTENSITY = 1.7f, WINDOW_SOFT = 0.09f, WINDOW_RANGE = 0.40f;
 	const float LANTERN_INTENSITY = 0.9f, LANTERN_SOFT = 0.06f, LANTERN_RANGE = 0.26f;
 
 	// Emission colours of glowing surfaces (windows, coals)
@@ -41,23 +42,32 @@ void Interior::Init()
 {
 	shader = new Shader("shaders/interior.vert", "shaders/interior.frag");
 	shaderOk = Linked(shader, "Interior");
+	modelShader = new Shader("shaders/model.vert", "shaders/interior.frag");
+	modelShaderOk = Linked(modelShader, "Interior models");
 
 	MeshBuilder mb;
 	BuildGround(mb);
-	BuildTrees(mb);
-	BuildHut(mb, anchors);
+	BuildHutProps(mb, anchors);
 	BuildFirePit(mb, anchors);
 	BuildSeats(mb);
 	staticMesh.Upload(mb);
 	std::cout << "Interior: " << mb.VertexCount() << " vertices, " << mb.indices.size() / 3 << " triangles" << std::endl;
 
-	character.Init();
+	hut.Load("models/hut/hut.obj");
+	trees[layout::PINE].Load("models/trees/pine.obj");
+	trees[layout::PINE_TALL].Load("models/trees/pine_tall.obj");
+	trees[layout::SHRUB].Load("models/trees/shrub.obj");
+	bush.Load("models/trees/bush.obj");
+	snowman.Load("models/snowman/snowman.obj");
+	typhoeus.Load("models/typhoeus/typhoeus_pose0.obj");
+	typhoeus.LoadMorph("models/typhoeus/typhoeus_pose1.obj");
+
 	campfire.Init();
 	smoke.Init();
 
 	using namespace layout;
 	fireLocal = glm::translate(glm::mat4(1.0f), anchors.fire);
-	characterLocal = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(CHAR_X, GroundY(CHAR_X, CHAR_Z), CHAR_Z)),
+	seatLocal = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(CHAR_X, GroundY(CHAR_X, CHAR_Z), CHAR_Z)),
 		CHAR_YAW, glm::vec3(0, 1, 0));
 }
 
@@ -116,6 +126,54 @@ void Interior::SetModel(const glm::mat4& model)
 	glUniformMatrix3fv(glGetUniformLocation(shader->ID, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 }
 
+void Interior::SetFrameUniforms(GLuint program, const FrameContext& frame, Camera& camera)
+{
+	glm::mat4 camMatrix = camera.ProjectionMatrix() * camera.ViewMatrix();
+	glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_FALSE, glm::value_ptr(camMatrix));
+	glUniform3fv(glGetUniformLocation(program, "camPos"), 1, glm::value_ptr(frame.camPos));
+	glUniform1f(glGetUniformLocation(program, "time"), frame.time);
+	UploadSceneLights(program, lights);
+	glUniform1f(glGetUniformLocation(program, "windowGlow"), windowLevel);
+	glUniform1f(glGetUniformLocation(program, "fireGlow"), COAL_SMOULDER + campfire.Brightness());
+	glUniform3fv(glGetUniformLocation(program, "windowEmitColor"), 1, glm::value_ptr(WINDOW_EMIT));
+	glUniform3fv(glGetUniformLocation(program, "fireEmitColor"), 1, glm::value_ptr(FIRE_EMIT));
+}
+
+// Model matrix of an object standing on the snow: globe * translate * rotate * scale
+static glm::mat4 OnGround(const glm::mat4& globe, float x, float z, float yaw, float scale, float sink = 0.0f)
+{
+	glm::mat4 m = glm::translate(globe, glm::vec3(x, GROUND_Y_RATIO + layout::TerrainOffset(x, z) - sink, z));
+	m = glm::rotate(m, yaw, glm::vec3(0, 1, 0));
+	return glm::scale(m, glm::vec3(scale));
+}
+
+void Interior::DrawModels(const FrameContext& frame, Camera& camera)
+{
+	using namespace layout;
+	const glm::mat4& globe = frame.globeModel;
+	modelShader->Activate();
+	SetFrameUniforms(modelShader->ID, frame, camera);
+	glUniform1i(glGetUniformLocation(modelShader->ID, "twoSided"), 1);   // cards and cloth seen from both sides
+	const GLuint p = modelShader->ID;
+
+	hut.Draw(p, globe * HutMatrix());
+
+	for (const TreeSpot& t : TREES)
+		trees[t.model].Draw(p, OnGround(globe, t.x, t.z, t.yawDeg * DEG, t.scale, 0.006f));
+	for (const BushSpot& b : BUSHES)
+		bush.Draw(p, OnGround(globe, b.x, b.z, b.yawDeg * DEG, b.scale, 0.006f));
+	snowman.Draw(p, OnGround(globe, SNOWMAN_X, SNOWMAN_Z, SNOWMAN_YAW, 1.0f, 0.012f));
+
+	// Typhoeus sits on the seat log. Animation: she watches the fire, then now and then
+	// glances aside and lifts her hands (pose 1), plus a slow breathing sway.
+	const float t = frame.time;
+	const float cycle = std::fmod(t, 10.0f) / 10.0f;
+	auto smooth = [](float a, float b, float x) { float k = std::clamp((x - a) / (b - a), 0.0f, 1.0f); return k * k * (3 - 2 * k); };
+	float glance = smooth(0.35f, 0.50f, cycle) * (1.0f - smooth(0.72f, 0.88f, cycle));
+	float breath = 0.06f * (0.5f + 0.5f * std::sin(t * 2.1f));
+	typhoeus.Draw(p, globe * seatLocal, std::min(1.0f, glance + breath));
+}
+
 void Interior::Draw(const FrameContext& frame, Camera& camera)
 {
 	if (!shaderOk) return;
@@ -124,19 +182,11 @@ void Interior::Draw(const FrameContext& frame, Camera& camera)
 
 	shader->Activate();
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *shader, "camMatrix");
-	glUniform3fv(glGetUniformLocation(shader->ID, "camPos"), 1, glm::value_ptr(frame.camPos));
-	glUniform1f(glGetUniformLocation(shader->ID, "time"), frame.time);
-	UploadSceneLights(shader->ID, lights);
-	glUniform1f(glGetUniformLocation(shader->ID, "windowGlow"), windowLevel);
-	glUniform1f(glGetUniformLocation(shader->ID, "fireGlow"), COAL_SMOULDER + campfire.Brightness());
-	glUniform3fv(glGetUniformLocation(shader->ID, "windowEmitColor"), 1, glm::value_ptr(WINDOW_EMIT));
-	glUniform3fv(glGetUniformLocation(shader->ID, "fireEmitColor"), 1, glm::value_ptr(FIRE_EMIT));
-
+	SetFrameUniforms(shader->ID, frame, camera);
 	SetModel(frame.globeModel);
 	staticMesh.Draw();
 
-	character.Draw(frame.globeModel * characterLocal, frame.time,
-		[this](const glm::mat4& m) { SetModel(m); });
+	if (modelShaderOk) DrawModels(frame, camera);
 
 	const glm::mat4 fireModel = frame.globeModel * fireLocal;
 	campfire.DrawFlame(fireModel, camera, frame.time);

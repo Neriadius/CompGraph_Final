@@ -2,15 +2,18 @@
 #define INTERIOR_LAYOUT_H
 
 // Where everything inside the globe stands (Person 3).
-// One place for the numbers, used by BOTH the geometry (InteriorModels.cpp) and the
-// snow (SurfaceHeightAt in SceneConstants.h), so flakes settle exactly on the drifts,
-// the hut roof and the pine branches.
+// One place for the numbers, used by BOTH the drawing (Interior.cpp, InteriorModels.cpp,
+// HutProps.cpp) and the snow (SurfaceHeightAt in SceneConstants.h), so flakes settle exactly
+// on the drifts, the hut roof and the pine branches.
 //
 // Units: globe radius = 1, origin = globe centre. Heights here are OFFSETS above the
-// flat ground level (GROUND_Y_RATIO in SceneConstants.h).
+// flat ground level (GROUND_Y_RATIO in SceneConstants.h). The OBJ models in models/ are
+// already in these units (base at y = 0, facing +Z), see tools/convert_static.py.
 
 #include <algorithm>
 #include <cmath>
+
+#include "ModelHeights.h"
 
 namespace layout
 {
@@ -31,47 +34,43 @@ namespace layout
 		{ 0.30f, -0.55f, 0.14f, 0.020f },
 	};
 
-	// ---- hut (log cabin). Local frame: X = width, Z = depth, door on the +Z (front) side ----
+	// ---- hut (models/hut/hut.obj). Local frame: door on +Z (front), window on +X ----
 	constexpr float HUT_X = -0.22f, HUT_Z = -0.24f;
 	constexpr float HUT_YAW = 35.0f * DEG;        // turns the door towards the campfire
-	constexpr float HUT_W = 0.32f;                // wall centre lines, local X
-	constexpr float HUT_D = 0.38f;                // wall centre lines, local Z
-	constexpr float LOG_R = 0.018f;               // wall log radius
-	constexpr int LOG_COURSES = 6;
-	constexpr float LOG_STEP = 2.0f * LOG_R * 0.92f;
-	constexpr float WALL_H = LOG_R + (LOG_COURSES - 1) * LOG_STEP + LOG_R;
-	constexpr float ROOF_RISE = 0.15f;            // ridge height above the wall top
-	constexpr float ROOF_SLOPE = ROOF_RISE / (0.5f * HUT_W);
-	constexpr float ROOF_EAVE = 0.05f;            // overhang past the side walls (local X)
-	constexpr float ROOF_GABLE = 0.04f;           // overhang past front / back (local Z)
-	constexpr float ROOF_T = 0.018f;              // roof board thickness
-	constexpr float ROOF_SNOW_T = 0.022f;         // snow layer on the roof
-	constexpr float HUT_SINK = 0.012f;            // bottom logs sit a little in the snow
-	constexpr float DOOR_LX = -0.06f, DOOR_W = 0.075f, DOOR_H = 0.145f;
+	constexpr float HUT_SINK = 0.012f;            // floor level with the snow
+	// outer faces of the log walls, hut-local
+	constexpr float HUT_FRONT = 0.186f, HUT_BACK = -0.183f, HUT_LEFT = -0.197f, HUT_RIGHT = 0.184f;
+	constexpr float DOOR_LX = -0.010f;            // door centre along the front wall
+	// points measured on the model: outside the window, top of the chimney (hut-local, y from the base)
+	inline constexpr float WINDOW_LIGHT[3] = { 0.209f, 0.154f, 0.0f };
+	inline constexpr float CHIMNEY_TOP[3] = { -0.010f, 0.392f, -0.113f };
 
-	// ---- campfire, seat, character ----
+	// ---- campfire, seat, Typhoeus ----
 	constexpr float FIRE_X = 0.13f, FIRE_Z = 0.16f;
 	constexpr float CHAR_X = 0.215f, CHAR_Z = 0.03f;                // seat log centre
 	constexpr float CHAR_YAW = -32.0f * DEG;                        // faces the fire
 	constexpr float STUMP_X = -0.02f, STUMP_Z = 0.22f;              // second seat with a mug
+	constexpr float SNOWMAN_X = -0.44f, SNOWMAN_Z = 0.40f, SNOWMAN_YAW = 30.0f * DEG;
 
-	// ---- pine trees: tiers of cones (scale 1) ----
-	struct Tier { float bottom, height, radius; };
-	inline constexpr Tier TIERS[] = {
-		{ 0.060f, 0.170f, 0.160f },
-		{ 0.150f, 0.150f, 0.125f },
-		{ 0.240f, 0.150f, 0.090f },
-	};
-	constexpr float TRUNK_H = 0.08f, TRUNK_R = 0.022f;
-
-	struct TreeSpot { float x, z, scale, yawDeg; };
+	// ---- trees (models/trees): snow rests on the pines and shrubs, not on the bare bushes ----
+	enum TreeModel { PINE = 0, PINE_TALL = 1, SHRUB = 2 };
+	struct TreeSpot { float x, z, scale, yawDeg; int model; };
 	inline constexpr TreeSpot TREES[] = {
-		{ 0.50f, -0.30f, 1.00f, 0.0f },
-		{ 0.15f, -0.62f, 0.78f, 40.0f },
-		{ -0.58f, 0.20f, 0.92f, 15.0f },
-		{ 0.58f, 0.22f, 0.62f, 70.0f },
-		{ -0.30f, 0.52f, 0.55f, 110.0f },
-		{ 0.40f, 0.50f, 0.45f, 200.0f },
+		{ 0.50f, -0.30f, 1.00f, 0.0f, PINE_TALL },
+		{ 0.15f, -0.62f, 0.85f, 40.0f, PINE },
+		{ -0.58f, 0.20f, 0.95f, 15.0f, PINE_TALL },
+		{ 0.58f, 0.22f, 0.75f, 70.0f, PINE },
+		{ -0.30f, 0.52f, 0.62f, 110.0f, PINE },
+		{ 0.40f, 0.50f, 0.55f, 200.0f, PINE },
+		{ 0.34f, -0.08f, 0.95f, 30.0f, SHRUB },
+		{ 0.03f, 0.66f, 1.10f, 120.0f, SHRUB },
+		{ -0.48f, -0.55f, 1.00f, 60.0f, SHRUB },
+	};
+	struct BushSpot { float x, z, scale, yawDeg; };
+	inline constexpr BushSpot BUSHES[] = {
+		{ 0.68f, -0.10f, 0.9f, 20.0f },
+		{ -0.70f, -0.05f, 1.0f, 140.0f },
+		{ 0.25f, 0.66f, 0.7f, 250.0f },
 	};
 
 	// ---------------------------------------------------------------
@@ -91,7 +90,7 @@ namespace layout
 	inline void ToHut(float x, float z, float& lx, float& lz)
 	{
 		float dx = x - HUT_X, dz = z - HUT_Z;
-		lx = HUT_COS * dx - HUT_SIN * dz;     // inverse of the yaw rotation used for the geometry
+		lx = HUT_COS * dx - HUT_SIN * dz;     // inverse of the yaw rotation used for drawing
 		lz = HUT_SIN * dx + HUT_COS * dz;
 	}
 
@@ -100,14 +99,6 @@ namespace layout
 	{
 		x = HUT_X + HUT_COS * lx + HUT_SIN * lz;
 		z = HUT_Z - HUT_SIN * lx + HUT_COS * lz;
-	}
-
-	inline float TreeSeed(int tree, int tier) { return 1.7f * tree + 4.3f * tier; }
-
-	// Wavy hem of a pine tier: branch tips stick out (tree-local angle)
-	inline float TierWave(float theta, float seed)
-	{
-		return 1.0f + 0.08f * std::sin(7.0f * theta + seed) + 0.04f * std::sin(13.0f * theta + 2.0f * seed);
 	}
 
 	// Snow drifts: gaussian bumps, flat under the hut and around the fire, zero at the rim
@@ -127,24 +118,21 @@ namespace layout
 		return h * Smooth(GROUND_DISC_R, 0.66f, r) * Smooth(0.30f, 0.42f, hut) * Smooth(0.16f, 0.28f, fire);
 	}
 
-	// Height of the roof's bottom (board underside) above the ground, hut-local
-	inline float RoofLine(float lx)
-	{
-		return WALL_H - HUT_SINK + ROOF_SLOPE * (0.5f * HUT_W - std::fabs(lx));
-	}
-
-	// Top of the snow on the roof, or -1 outside the roof
-	inline float RoofSnowTop(float x, float z)
+	// Top of the hut (snowy roof, chimney), or -1 outside it
+	inline float HutTop(float x, float z)
 	{
 		float lx, lz;
 		ToHut(x, z, lx, lz);
-		if (std::fabs(lx) > 0.5f * HUT_W + ROOF_EAVE || std::fabs(lz) > 0.5f * HUT_D + ROOF_GABLE) return -1.0f;
-		float cosA = 1.0f / std::sqrt(1.0f + ROOF_SLOPE * ROOF_SLOPE);
-		return RoofLine(lx) + (ROOF_T + ROOF_SNOW_T) / cosA;
+		float h = heights::Sample(heights::HUT, lx, lz);
+		return h >= 0.0f ? h - HUT_SINK : -1.0f;
+	}
+
+	inline const heights::Field& TreeField(int model)
+	{
+		return model == PINE_TALL ? heights::PINE_TALL : (model == SHRUB ? heights::SHRUB : heights::PINE);
 	}
 
 	constexpr int TREE_COUNT = (int)(sizeof(TREES) / sizeof(TREES[0]));
-	constexpr float WAVE_MAX = 1.12f;             // largest TierWave value
 
 	// Ground offset under each tree, computed once
 	inline const float* TreeBases()
@@ -159,30 +147,21 @@ namespace layout
 		return bases;
 	}
 
-	// Outer surface of the pine cones (snow rests on the branches), or -1 outside all trees
+	// Top of the pine branches under (x, z), or -1 outside all trees
 	inline float TreeTop(float x, float z)
 	{
 		const float* bases = TreeBases();
 		float best = -1.0f;
-		int treeIndex = 0;
-		for (const TreeSpot& t : TREES)
+		for (int i = 0; i < TREE_COUNT; i++)
 		{
+			const TreeSpot& t = TREES[i];
+			const heights::Field& f = TreeField(t.model);
 			float dx = x - t.x, dz = z - t.z;
-			float reach = TIERS[0].radius * t.scale * WAVE_MAX;
-			if (dx * dx + dz * dz > reach * reach) { treeIndex++; continue; }   // far from this tree
-			float d = std::sqrt(dx * dx + dz * dz);
-			float base = bases[treeIndex];
-			float theta = std::atan2(dz, dx) + t.yawDeg * DEG;                // tree-local angle
-			int tierIndex = 0;
-			for (const Tier& tier : TIERS)
-			{
-				float R = tier.radius * t.scale * TierWave(theta, TreeSeed(treeIndex, tierIndex));
-				tierIndex++;
-				if (d > R) continue;
-				float y = base + (tier.bottom + tier.height * (1.0f - d / R)) * t.scale;
-				best = std::max(best, y);
-			}
-			treeIndex++;
+			float reach = 0.75f * f.cell * f.nx * t.scale;        // bounding radius of the height map
+			if (dx * dx + dz * dz > reach * reach) continue;       // far from this tree
+			float c = std::cos(t.yawDeg * DEG), s = std::sin(t.yawDeg * DEG);
+			float h = heights::Sample(f, (c * dx - s * dz) / t.scale, (s * dx + c * dz) / t.scale);
+			if (h >= 0.0f) best = std::max(best, bases[i] + h * t.scale);
 		}
 		return best;
 	}
@@ -191,7 +170,7 @@ namespace layout
 	inline float SurfaceOffset(float x, float z)
 	{
 		float h = TerrainOffset(x, z);
-		float roof = RoofSnowTop(x, z);
+		float roof = HutTop(x, z);
 		if (roof >= 0.0f) h = std::max(h, roof + REST_LIFT);
 		float tree = TreeTop(x, z);
 		if (tree >= 0.0f) h = std::max(h, tree + REST_LIFT * 1.5f);

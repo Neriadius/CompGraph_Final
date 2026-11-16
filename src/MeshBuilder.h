@@ -1,7 +1,7 @@
 #ifndef MESH_BUILDER_H
 #define MESH_BUILDER_H
 
-// Builds meshes out of primitives (box, cylinder/cone, sphere, lathe, prism, torus, grid)
+// Builds meshes out of primitives (box, cylinder/cone, sphere, torus, grid)
 // for the interior of the globe (Person 3). Every primitive takes a transform `xf`
 // (local -> mesh space), so parts can be placed, rotated and scaled freely and many parts
 // end up in ONE vertex buffer = one draw call.
@@ -27,9 +27,6 @@ enum Pattern
 	PAT_RINGS = 2,     // tree rings on cut log ends (uv = position on the cap)
 	PAT_SNOW = 3,      // soft variation + glitter
 	PAT_STONE = 4,     // mottled stone
-	PAT_PLANKS = 5,    // vertical boards (uv.x across the boards)
-	PAT_NEEDLES = 6,   // pine needles: streaks down the cone
-	PAT_KNIT = 7,      // knitted wool (hat, scarf, mittens)
 };
 
 struct Material
@@ -71,13 +68,6 @@ public:
 	// UV sphere; scale xf for ellipsoids. yMin/yMax (-1..1) cut it (e.g. 0..1 = upper half).
 	void Sphere(const glm::mat4& xf, float radius, int stacks, int slices, const Material& m,
 		float yMin = -1.0f, float yMax = 1.0f);
-
-	// Surface of revolution around +Y; profile points are (radius, y) from bottom to top.
-	void Lathe(const glm::mat4& xf, const std::vector<glm::vec2>& profile, int slices, const Material& m);
-
-	// Convex polygon in the XY plane extruded along Z from -depth/2 to +depth/2.
-	void Prism(const glm::mat4& xf, const std::vector<glm::vec2>& polygon, float depth, const Material& m,
-		const Material* sides = nullptr);
 
 	// Torus around +Y (ring radius R, tube radius r).
 	void Torus(const glm::mat4& xf, float R, float r, int rings, int sides, const Material& m);

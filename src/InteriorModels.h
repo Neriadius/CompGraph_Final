@@ -1,9 +1,10 @@
 #ifndef INTERIOR_MODELS_H
 #define INTERIOR_MODELS_H
 
-// Static geometry of the globe interior (Person 3), all built from primitives into one mesh:
-// snow ground, pine trees, log hut (HutModel.cpp), fire pit, seats and props.
+// Procedural geometry of the globe interior (Person 3), built from primitives into one mesh:
+// snow ground, fire pit, seats, and props around the hut (HutProps.cpp).
 // Built once at start-up in globe space (radius 1, centre at the origin).
+// The hut, trees, snowman and Typhoeus are OBJ models (models/, drawn by Interior.cpp).
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -17,9 +18,7 @@ namespace palette
 	Material PackedSnow();
 	Material Bark();
 	Material LogEnds();
-	Material Planks(const glm::vec3& color);
 	Material Stone(const glm::vec3& color = glm::vec3(0.50f, 0.50f, 0.54f));
-	Material Needles();
 	Material Metal();
 	Material Plain(const glm::vec3& color, float spec = 0.06f, float shininess = 12.0f);
 }
@@ -27,7 +26,7 @@ namespace palette
 // Where the lights sit, filled while the geometry is built (globe space, no shake)
 struct InteriorAnchors
 {
-	std::vector<glm::vec3> windowLights;     // just outside each hut window
+	std::vector<glm::vec3> windowLights;     // just outside the hut's window
 	glm::vec3 lantern = glm::vec3(0.0f);
 	glm::vec3 fire = glm::vec3(0.0f);        // centre of the fire pit on the ground
 	glm::vec3 chimneyTop = glm::vec3(0.0f);
@@ -37,8 +36,8 @@ struct InteriorAnchors
 float GroundY(float x, float z);
 
 void BuildGround(MeshBuilder& mb);
-void BuildTrees(MeshBuilder& mb);
-void BuildHut(MeshBuilder& mb, InteriorAnchors& anchors);        // HutModel.cpp
+void BuildHutProps(MeshBuilder& mb, InteriorAnchors& anchors);   // HutProps.cpp
+glm::mat4 HutMatrix();                                            // hut model -> globe space
 void BuildFirePit(MeshBuilder& mb, InteriorAnchors& anchors);
 void BuildSeats(MeshBuilder& mb);
 

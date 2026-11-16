@@ -32,20 +32,10 @@ namespace palette
 		Material m; m.color = { 0.82f, 0.63f, 0.40f }; m.spec = 0.04f; m.shininess = 8.0f;
 		m.pattern = PAT_RINGS; m.patternAmount = 1.0f; return m;
 	}
-	Material Planks(const glm::vec3& color)
-	{
-		Material m; m.color = color; m.spec = 0.05f; m.shininess = 10.0f;
-		m.pattern = PAT_PLANKS; m.patternAmount = 1.0f; return m;
-	}
 	Material Stone(const glm::vec3& color)
 	{
 		Material m; m.color = color; m.spec = 0.12f; m.shininess = 18.0f;
 		m.pattern = PAT_STONE; m.patternAmount = 1.0f; return m;
-	}
-	Material Needles()
-	{
-		Material m; m.color = { 0.12f, 0.33f, 0.20f }; m.spec = 0.06f; m.shininess = 12.0f;
-		m.pattern = PAT_NEEDLES; m.patternAmount = 1.0f; return m;
 	}
 	Material Metal()
 	{
@@ -91,7 +81,7 @@ void BuildGround(MeshBuilder& mb)
 
 	// Path from the hut door to the fire, packed snow around the fire, scorched ring
 	float doorX, doorZ;
-	FromHut(DOOR_LX, 0.5f * HUT_D + 0.06f, doorX, doorZ);
+	FromHut(DOOR_LX, HUT_FRONT + 0.04f, doorX, doorZ);
 	const glm::vec2 a(doorX, doorZ), b(FIRE_X, FIRE_Z), seat(CHAR_X, CHAR_Z), stump(STUMP_X, STUMP_Z);
 	const glm::vec3 packed = palette::PackedSnow().color, scorch(0.30f, 0.27f, 0.27f);
 
@@ -114,94 +104,6 @@ void BuildGround(MeshBuilder& mb)
 		c = glm::mix(c, scorch, (1.0f - Smooth(0.055f, 0.085f, fireD)) * 0.8f);
 		f[6] = c.r; f[7] = c.g; f[8] = c.b;
 	}
-}
-
-// ---------------------------------------------------------------
-// Pine trees: trunk + three tiers with wavy hems, each tier wearing a snow cap
-// ---------------------------------------------------------------
-namespace
-{
-	// Point on a tier's cone. theta = tree-local angle, u = 0 at the tip .. 1 at the hem,
-	// out = push along the surface normal (for the snow cap).
-	glm::vec3 TierPoint(const Tier& tier, float s, float seed, float theta, float u, float out)
-	{
-		float wave = TierWave(theta, seed);
-		float R = tier.radius * s * wave;
-		float H = tier.height * s;
-		float top = (tier.bottom + tier.height) * s;
-		float droop = 0.6f * H * std::pow(u, 4.0f) * std::max(0.0f, wave - 1.0f);   // tips bend down
-		glm::vec3 p(R * u * std::cos(theta), top - H * u - droop, R * u * std::sin(theta));
-		glm::vec3 n = glm::normalize(glm::vec3(H * std::cos(theta), R, H * std::sin(theta)));
-		return p + n * out;
-	}
-
-	void BuildTree(MeshBuilder& mb, const TreeSpot& t, int treeIndex)
-	{
-		const float s = t.scale;
-		// +yaw: the same rotation TreeTop() undoes when it looks up the wavy hem
-		glm::mat4 root = At(t.x, GROUND_Y_RATIO + TerrainOffset(t.x, t.z), t.z, t.yawDeg * DEG);
-		Material ends = palette::LogEnds();
-		Material trunk = palette::Bark();
-		trunk.color = { 0.32f, 0.21f, 0.14f };
-		mb.Cylinder(glm::translate(root, glm::vec3(0, -0.03f, 0)), TRUNK_R * s, TRUNK_R * 0.8f * s,
-			TRUNK_H * s + 0.03f, 10, trunk, &ends);
-
-		const int cols = 28, rows = 6;
-		Material needles = palette::Needles();
-		needles.color *= 0.9f + 0.2f * Hash(treeIndex + 0.3f);
-		Material under = needles;
-		under.color *= 0.55f;
-		Material snow = palette::Snow();
-
-		for (int k = 0; k < 3; k++)
-		{
-			const Tier& tier = TIERS[k];
-			const float seed = TreeSeed(treeIndex, k);
-			auto local = [&](glm::vec3 p) { return glm::vec3(root * glm::vec4(p, 1.0f)); };
-			auto theta = [&](int j) { return 2.0f * PI * j / cols; };
-
-			// green cone
-			mb.Grid(rows, cols, true,
-				[&](int i, int j) { return local(TierPoint(tier, s, seed, theta(j), (float)i / (rows - 1), 0.0f)); },
-				[&](int i, int j) { return glm::vec2(theta(j) * tier.radius * s, (float)i / (rows - 1) * tier.height * s); },
-				needles);
-
-			// underside: from the hem in to the trunk
-			const float underY = (tier.bottom + 0.25f * tier.height) * s;
-			mb.Grid(3, cols, true,
-				[&](int i, int j) {
-					glm::vec3 hem = TierPoint(tier, s, seed, theta(j), 1.0f, 0.0f);
-					glm::vec3 c(0.0f, underY, 0.0f);
-					return local(glm::mix(hem, c, i / 2.0f));
-				},
-				[&](int, int) { return glm::vec2(0.0f); }, under);
-
-			// snow cap: covers the top part, wavy lower edge with a rounded lip
-			auto capEnd = [&](float th) {
-				return 0.46f + 0.13f * std::sin(5.0f * th + seed * 1.7f) + 0.07f * std::sin(11.0f * th + seed);
-			};
-			const int capRows = 8;
-			mb.Grid(capRows, cols, true,
-				[&](int i, int j) {
-					float th = theta(j), e = capEnd(th);
-					if (i <= 5) return local(TierPoint(tier, s, seed, th, e * i / 5.0f, 0.004f * s));
-					if (i == 6) return local(TierPoint(tier, s, seed, th, e + 0.03f, 0.010f * s));
-					return local(TierPoint(tier, s, seed, th, e + 0.05f, 0.001f * s));
-				},
-				[&](int i, int j) { return glm::vec2((float)j, (float)i); }, snow);
-		}
-		// a puff of snow on the very top
-		glm::vec3 tip = TierPoint(TIERS[2], s, 0.0f, 0.0f, 0.0f, 0.0f);
-		mb.Sphere(glm::scale(glm::translate(root, tip + glm::vec3(0, 0.002f, 0)), glm::vec3(1.0f, 0.8f, 1.0f)),
-			0.011f * s, 6, 10, snow);
-	}
-}
-
-void BuildTrees(MeshBuilder& mb)
-{
-	int index = 0;
-	for (const TreeSpot& t : TREES)
-		BuildTree(mb, t, index++);
 }
 
 // ---------------------------------------------------------------
