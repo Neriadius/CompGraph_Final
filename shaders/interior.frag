@@ -1,10 +1,14 @@
 #version 330 core
 
-// Per-fragment Blinn-Phong for the interior (Person 3):
+// Per-fragment Blinn-Phong for the interior (Person 3), used by two programs:
+//   interior.vert + interior.frag : procedural geometry (colour + material per vertex)
+//   model.vert    + interior.frag : imported OBJ models (colour + material per part, texture)
+//
+// Lighting:
 //   moon (directional) + up to MAX_POINT_LIGHTS point lights (campfire, hut windows, lantern)
 //   + hemisphere ambient + emission (lit windows, glowing coals)
-// Surface detail (bark, tree rings, planks, stone, snow glitter, knit) is procedural:
-// no texture files, the pattern id comes from the vertex (see src/MeshBuilder.h).
+// Procedural surface detail (bark, tree rings, stone, snow glitter) for the built mesh,
+// pattern id from the vertex (see src/MeshBuilder.h); imported models use their textures.
 
 #define MAX_POINT_LIGHTS 6
 
@@ -36,6 +40,12 @@ uniform float windowGlow;                      // 0..1, hut lights (L)
 uniform float fireGlow;                        // 0..~1.3, campfire flicker (F)
 uniform vec3 windowEmitColor;
 uniform vec3 fireEmitColor;
+
+// ---- imported models (src/Model.cpp); stay 0 for the procedural mesh ----
+uniform int useTexture;                        // albedo = colour * texture
+uniform int alphaCutout;                       // discard where texture alpha < 0.5 (branches)
+uniform int twoSided;                          // flip the normal on back faces (thin cards, cloth)
+uniform sampler2D albedoMap;
 
 // ---------------------------------------------------------------
 // Hash without sine (Dave Hoskins, MIT) + value noise.
@@ -114,27 +124,6 @@ vec3 Pattern(vec3 base, int id, vec2 uv, vec3 lp)
 		float speck = step(0.82, valueNoise3(lp * 260.0));
 		return base * (0.62 + 0.62 * m) + vec3(0.08) * speck;
 	}
-	if (id == 5)          // vertical planks, uv.x across the boards
-	{
-		const float W = 0.024;
-		float k = floor(uv.x / W), f = fract(uv.x / W);
-		float seam = smoothstep(0.0, 0.07, f) * smoothstep(1.0, 0.93, f);
-		float grain = valueNoise2(vec2(uv.x * 160.0, uv.y * 9.0));
-		return base * (0.82 + 0.3 * hash12(vec2(k, 3.7))) * (0.85 + 0.25 * grain) * mix(0.5, 1.0, seam);
-	}
-	if (id == 6)          // pine needles: streaks down the cone
-	{
-		float a = atan(lp.z, lp.x);
-		float s = valueNoise2(vec2(a * 30.0, lp.y * 30.0));
-		float tuft = valueNoise3(lp * 120.0);
-		return base * (0.65 + 0.45 * s) * (0.85 + 0.3 * tuft);
-	}
-	if (id == 7)          // knitted wool: ribs + loops
-	{
-		float rib = 0.5 + 0.5 * sin(uv.x * 900.0);
-		float loops = 0.5 + 0.5 * sin(uv.y * 1300.0 + 2.0 * sin(uv.x * 900.0));
-		return base * (0.78 + 0.14 * rib + 0.1 * loops);
-	}
 	return base;
 }
 
@@ -153,9 +142,17 @@ void main()
 	int pattern = int(vMat.z + 0.5);
 	float amount = vMat.w;
 
-	vec3 albedo = mix(vColor, Pattern(vColor, pattern, vUV, vLocalPos), amount);
+	vec3 base = vColor;
+	if (useTexture == 1)
+	{
+		vec4 tex = texture(albedoMap, vUV);
+		if (alphaCutout == 1 && tex.a < 0.5) discard;
+		base *= tex.rgb;
+	}
+	vec3 albedo = mix(base, Pattern(base, pattern, vUV, vLocalPos), amount);
 
 	vec3 N = normalize(vNormal);
+	if (twoSided == 1 && !gl_FrontFacing) N = -N;
 	vec3 V = normalize(camPos - vWorldPos);
 	float wrap = (pattern == 3) ? 0.35 : 0.0;          // snow scatters light a little past the terminator
 
