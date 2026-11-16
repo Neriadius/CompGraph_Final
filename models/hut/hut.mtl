@@ -1,0 +1,47 @@
+newmtl mBrick
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd brick.png
+
+newmtl mDoor
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd door.png
+
+newmtl mWood
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd wood.png
+
+newmtl mLogSide
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd wood_snow.png
+
+newmtl mLogFront
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd wood2.png
+
+newmtl mSnow
+Kd 0.8000 0.8000 0.8000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+
+newmtl mWindowGlass
+Kd 0.1200 0.1300 0.1600
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+Ke 1.000 0.740 0.400

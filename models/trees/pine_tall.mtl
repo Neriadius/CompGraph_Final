@@ -1,0 +1,13 @@
+newmtl SnowBranchCircle
+Kd 1.9000 2.0000 2.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd SnowBranchCircle_baseColor.png
+map_d SnowBranchCircle_baseColor.png
+
+newmtl Trunk
+Kd 0.1195 0.0897 0.0560
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
