@@ -21,6 +21,7 @@
 #include "src/Snow.h"
 #include "src/Globe.h"
 #include "src/MusicBox.h"
+#include "src/FpsCounter.h"
 
 const int WINDOW_W = 1280;
 const int WINDOW_H = 720;
@@ -37,9 +38,8 @@ Scene scene;
 Snow snow;
 Globe globe;
 MusicBox musicBox;
+FpsCounter fpsCounter;
 float frameDt = 0.0f;
-int fpsFrames = 0;
-int fpsLastTime = 0;
 
 // ---------------------------------------------------------------
 // GLUT callbacks
@@ -83,22 +83,12 @@ void display()
 	snow.Draw(frame, *camera);
 	globe.DrawGlass(GlassPass::Front, frame, *camera);
 
-	glutSwapBuffers();
+	// Update the measurement and draw a modern OpenGL overlay after all 3D passes.
+	if (fpsCounter.Frame(glutGet(GLUT_ELAPSED_TIME)) && fpsCounter.Visible())
+		glutSetWindowTitle(fpsCounter.Title().c_str());
+	fpsCounter.Draw(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
 
-	// Count rendered frames; refresh the title twice per second.
-	++fpsFrames;
-	int now = glutGet(GLUT_ELAPSED_TIME);
-	if (fpsLastTime == 0) fpsLastTime = now;
-	int elapsed = now - fpsLastTime;
-	if (elapsed >= 500)
-	{
-		float fps = 1000.0f * fpsFrames / elapsed;
-		char title[96];
-		std::snprintf(title, sizeof(title), "Snow Globe | FPS: %.1f", fps);
-		glutSetWindowTitle(title);
-		fpsFrames = 0;
-		fpsLastTime = now;
-	}
+	glutSwapBuffers();
 }
 
 void reshape(int w, int h)
@@ -144,6 +134,14 @@ void specialKeysUp(int key, int, int)
 void keyboard(unsigned char key, int, int)
 {
 	if (key == 27) { glutLeaveMainLoop(); return; }
+
+	if (key == ';')
+	{
+		fpsCounter.Toggle();
+		glutSetWindowTitle(fpsCounter.Title().c_str());
+		glutPostRedisplay();
+		return;
+	}
 
 	if (key == ' ')
 		shake.Impulse(0.6f);
@@ -229,6 +227,7 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
+	fpsCounter.Init();
 	GLint actualSamples = 0;
 	glGetIntegerv(GL_SAMPLES, &actualSamples);
 	std::cout << "MSAA samples: " << actualSamples << std::endl;
@@ -251,7 +250,7 @@ int main(int argc, char** argv)
 	glutMotionFunc(motion);
 
 	std::cout << "SPACE / left mouse: shake the globe (3 shakes start the music box)\n"
-		<< "C: orbit / free camera   P: projection   ESC: quit\n"
+		<< "C: orbit / free camera   P: projection   ;: toggle FPS title + overlay   ESC: quit\n"
 		<< "L: hut lights on/off   F: campfire on/off   I: day / night\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
 		<< "FREE : hold WASD to move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
