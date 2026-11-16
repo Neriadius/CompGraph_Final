@@ -1,33 +1,11 @@
 #ifndef SCENE_LIGHTS_H
 #define SCENE_LIGHTS_H
 
-// Lights of the globe interior, handed from the interior scene (Person 3) to any shader
-// (Person 4: glass, base, key...). Everything is in WORLD space and already includes the
-// shake, so a shader only has to read the uniforms below.
-//
-// Use it from any shader program:
-//     const SceneLights& lights = scene.Lights();     // updated every frame by Scene::Update
-//     myShader->Activate();
-//     UploadSceneLights(myShader->ID, lights);
-//
-// GLSL side (copy into the fragment shader; see shaders/interior.frag for a full example):
-//     #define MAX_POINT_LIGHTS 6
-//     uniform vec3  moonDir;                       // direction TOWARDS the moon
-//     uniform vec3  moonColor;
-//     uniform vec3  skyAmbient, groundAmbient;     // hemisphere ambient (up / down)
-//     uniform int   pointCount;
-//     uniform vec3  pointPos[MAX_POINT_LIGHTS];
-//     uniform vec3  pointColor[MAX_POINT_LIGHTS];  // colour * intensity (already flickering)
-//     uniform vec2  pointFalloff[MAX_POINT_LIGHTS];// x = soft radius r0, y = range (light is 0 beyond)
-//
-//   attenuation = 1 / (1 + (d / r0)^2) * window,  window = clamp(1 - (d / range)^4, 0, 1)^2
-//   interior.frag also adds a weak fill: skyAmbient * 0.8 * max(dot(N, F), 0),
-//   F = normalize(vec3(-moonDir.x, 0.35, -moonDir.z)) (sky light from the side opposite the moon)
-//
-// Day / night (I key): "moonDir / moonColor" is the KEY light: the moon at night, the sun by
-// day. ApplyDaylight() blends all values; `daylight` goes 0 (night) -> 1 (day) over a few
-// seconds, with a warm dawn tint half way. Shaders that only know one directional light
-// (base, key) can use OutsideLight(daylight).
+// Lights of the globe interior
+
+// Day / night (I key): "moonDir / moonColor" is the KEY light: the moon at night, the sun by day
+// ApplyDaylight() blends all values; `daylight` goes 0 (night) -> 1 (day) over a few
+// seconds, with a warm dawn tint half way
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -76,17 +54,17 @@ struct SceneLights
 	static const int FIRST_WINDOW = 1;      // hut windows + lantern (L toggles)
 };
 
-// Uploads all light uniforms to the active program (missing uniforms are ignored by GL).
+// Uploads all light uniforms to the active program (missing uniforms are ignored by GL)
 void UploadSceneLights(GLuint program, const SceneLights& lights);
 
-// Sets key light, ambient and daylight for a day amount 0..1 (point lights are not touched).
+// Sets key light, ambient and daylight for a day amount 0..1 (point lights are not touched)
 void ApplyDaylight(SceneLights& lights, float daylight);
 
 // Background (clear) colour for a day amount 0..1
 glm::vec3 BackgroundColor(float daylight);
 
 // One directional light for simple shaders (wooden base, brass key). At night it gives the
-// values those shaders used before, so they look the same as without day / night.
+// values those shaders used before, so they look the same as without day / night
 struct OutsideLightValues { glm::vec3 dir, color, ambient; };
 OutsideLightValues OutsideLight(float daylight);
 

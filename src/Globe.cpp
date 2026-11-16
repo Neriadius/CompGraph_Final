@@ -19,9 +19,7 @@ const float CUBEMAP_STRENGTH_INSIDE = 0.25f;
 const glm::vec3 GLASS_TINT(0.75f, 0.88f, 1.0f);
 // Temporary light direction; Person 4/3 will later feed real fire/window lights.
 
-// ---------------------------------------------------------------
 // Simple UV sphere (position + normal, interleaved). Used as the globe for now.
-// ---------------------------------------------------------------
 static void buildSphere(float radius, int stacks, int slices,
 	std::vector<GLfloat>& vertices, std::vector<GLuint>& indices)
 {

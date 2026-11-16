@@ -5,12 +5,12 @@ in vec3 normal;
 out vec4 FragColor;
 
 uniform vec3 camPos;
-uniform vec3 lightDir;   // normalized direction TOWARD the light
+uniform vec3 lightDir;   // normalized direction toward the light
 uniform vec3 glassTint;
 uniform float glassAlpha;
 uniform samplerCube skyBox;
 uniform float reflectStrength;
-uniform float daylight;  // 0 = night sky in the reflection, 1 = day sky (I key)
+uniform float daylight;  // 0 = night sky in the reflection, 1 = day sky
 
 void main()
 {
@@ -26,7 +26,7 @@ void main()
 	vec3 refl = mix(texture(skyBox, R).rgb, daySky, daylight);
 	float k = reflectStrength * (0.25 + 0.75 * fres);
 	alpha = clamp(alpha + 0.3 * k, 0.0, 1.0);
-	// Premultiplied output: keep specular highlights independent of alpha.
+	// keep specular highlights independent of alpha
 	vec3 rgb = glassTint * alpha + refl * k + vec3(spec);
 	FragColor = vec4(rgb, alpha);
 }

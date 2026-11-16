@@ -1,20 +1,14 @@
 #ifndef INTERIOR_H
 #define INTERIOR_H
 
-// The tiny world inside the globe (Person 3): snow ground, campfire, props (procedural)
+// The tiny world inside the globe: snow ground, campfire, props (procedural)
 // and the OBJ models: log hut, pine trees, bushes, snowman, Typhoeus sitting by the fire.
-// Owns its shaders and the light rig.
-//
+
 // Placement hierarchy (each model matrix = parent * local):
 //   globe (shake) -> hut         -> lantern, chimney smoke, window light
 //                 -> seat log     -> Typhoeus (animated by morphing between two poses)
 //                 -> fire pit     -> flame, sparks, glow, fire light
 //                 -> trees, bushes, snowman
-//
-//   Update(frame)   once per frame: fades, flicker, light positions (world space)
-//   Draw(frame)     opaque geometry, then the additive glow and sparks
-//   Inputs(key)     L = hut lights on/off, F = campfire on/off, I = day / night
-//   Lights()        all interior lights for other shaders (see SceneLights.h)
 
 #include <glm/glm.hpp>
 

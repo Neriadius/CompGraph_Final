@@ -16,11 +16,10 @@
 #include "Nameplate.h"
 #include "Interior.h"
 
-// ---------------------------------------------------------------
-// Wooden base (Person 4)
+
+// Wooden base
 // A solid of revolution built from a profile (radius, height) given in
 // globe-radius units. Vertex = position(3) normal(3) uv(2).
-// ---------------------------------------------------------------
 namespace
 {
 	struct ProfilePoint { float r, y; };

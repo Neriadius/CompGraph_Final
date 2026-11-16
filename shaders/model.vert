@@ -1,10 +1,10 @@
 #version 330 core
 
-// Imported OBJ models (Person 3): hut, trees, snowman, Typhoeus. Fragment shader is the
-// same as the procedural interior (interior.frag), so the lighting is identical.
-//
-// Morph animation: every vertex stores two poses; "morph" blends between them
-// (0 = first pose, 1 = second). Static models store the same pose twice.
+// Imported OBJ models: hut, trees, snowman, Typhoeus. Fragment shader is the
+// same as the procedural interior (interior.frag), so the lighting is identical
+
+// Morph animation: every vertex stores two poses, morph blends between them
+// (0 = first pose, 1 = second)
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;

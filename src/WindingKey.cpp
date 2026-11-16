@@ -6,7 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "SceneLights.h"   // OutsideLight(): day / night (Person 3)
+#include "SceneLights.h"   // OutsideLight(): day / night
 
 #include "Camera.h"
 #include "shaderClass.h"

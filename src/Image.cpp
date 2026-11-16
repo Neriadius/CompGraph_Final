@@ -9,9 +9,7 @@
 
 namespace
 {
-// ---------------------------------------------------------------
 // DEFLATE (RFC 1951) decoder
-// ---------------------------------------------------------------
 struct BitReader
 {
 	const uint8_t* data;
@@ -179,9 +177,7 @@ std::vector<uint8_t> zlibInflate(const std::vector<uint8_t>& in, size_t expected
 	return out;
 }
 
-// ---------------------------------------------------------------
 // PNG
-// ---------------------------------------------------------------
 uint32_t be32(const uint8_t* p) { return ((uint32_t)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]; }
 
 int paeth(int a, int b, int c)

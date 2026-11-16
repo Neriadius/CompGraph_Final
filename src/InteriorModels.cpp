@@ -9,9 +9,8 @@
 
 using namespace layout;
 
-// ---------------------------------------------------------------
+
 // Palette
-// ---------------------------------------------------------------
 namespace palette
 {
 	Material Snow()
@@ -63,8 +62,7 @@ float GroundY(float x, float z)
 	return GROUND_Y_RATIO + TerrainOffset(x, z) - REST_LIFT;
 }
 
-// How much of a light reaches point p (1 = lit, 0 = behind a mountain): march towards the
-// light over the height map. The edge is soft (penumbra grows with distance).
+// How much of a light reaches point p (1 = lit, 0 = behind a mountain)
 static float TerrainVisibility(const glm::vec3& p, const glm::vec3& L)
 {
 	float vis = 1.0f;
@@ -79,10 +77,8 @@ static float TerrainVisibility(const glm::vec3& p, const glm::vec3& L)
 	return vis;
 }
 
-// ---------------------------------------------------------------
 // Ground: polar grid over the terrain height map (mountains, drifts), with a packed path,
 // a scorched ring, and mountain shadows for the moon and the sun baked into uv
-// ---------------------------------------------------------------
 void BuildGround(MeshBuilder& mb)
 {
 	const int rings = 110, slices = 240;
@@ -130,9 +126,7 @@ void BuildGround(MeshBuilder& mb)
 	}
 }
 
-// ---------------------------------------------------------------
-// Fire pit: ash, stone ring, crossed + leaning logs, glowing coals (flame is in Campfire.cpp)
-// ---------------------------------------------------------------
+// Fire pit: ash, stone ring, crossed + leaning logs, glowing coals
 void BuildFirePit(MeshBuilder& mb, InteriorAnchors& anchors)
 {
 	const float gy = GroundY(FIRE_X, FIRE_Z);
@@ -143,7 +137,7 @@ void BuildFirePit(MeshBuilder& mb, InteriorAnchors& anchors)
 	ash.patternAmount = 0.6f;
 	mb.Cylinder(glm::translate(root, glm::vec3(0, -0.004f, 0)), 0.060f, 0.056f, 0.010f, 24, ash, &ash);
 
-	// stone ring: low-poly (faceted) squashed spheres
+	// stone ring: low-poly squashed spheres
 	for (int k = 0; k < 10; k++)
 	{
 		float a = 2.0f * PI * k / 10 + 0.2f * Hash(k + 1.0f);
@@ -170,7 +164,7 @@ void BuildFirePit(MeshBuilder& mb, InteriorAnchors& anchors)
 		mb.Log(m, 0.0105f, 0.095f, charred, hotEnds, 10);
 	}
 
-	// leaning logs (tipi)
+	// leaning logs
 	for (int k = 0; k < 4; k++)
 	{
 		float a = 2.0f * PI * k / 4 + 0.6f;
@@ -196,9 +190,7 @@ void BuildFirePit(MeshBuilder& mb, InteriorAnchors& anchors)
 	}
 }
 
-// ---------------------------------------------------------------
 // Seats: the log the character sits on, and a stump with a tin mug
-// ---------------------------------------------------------------
 void BuildSeats(MeshBuilder& mb)
 {
 	Material bark = palette::Bark(), ends = palette::LogEnds();

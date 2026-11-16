@@ -1,14 +1,15 @@
 #version 330 core
 
-// Per-fragment Blinn-Phong for the interior (Person 3), used by two programs:
+// Per-fragment Blinn-Phong for the interior, used by two programs:
 //   interior.vert + interior.frag : procedural geometry (colour + material per vertex)
 //   model.vert    + interior.frag : imported OBJ models (colour + material per part, texture)
-//
+
 // Lighting:
 //   moon (directional) + up to MAX_POINT_LIGHTS point lights (campfire, hut windows, lantern)
 //   + hemisphere ambient + emission (lit windows, glowing coals)
+
 // Procedural surface detail (bark, tree rings, stone, snow glitter) for the built mesh,
-// pattern id from the vertex (see src/MeshBuilder.h); imported models use their textures.
+// pattern id from the vertex (src/MeshBuilder.h)
 
 #define MAX_POINT_LIGHTS 6
 
@@ -25,8 +26,8 @@ out vec4 FragColor;
 uniform vec3 camPos;
 uniform float time;
 
-// ---- light block (same names as src/SceneLights.h, reusable in other shaders) ----
-uniform vec3 moonDir;                          // direction TOWARDS the key light (moon / sun)
+// light block
+uniform vec3 moonDir;                          // direction towards the key light (moon / sun)
 uniform vec3 moonColor;
 uniform float daylight;                        // 0 = night, 1 = day
 uniform vec3 skyAmbient;
@@ -36,22 +37,19 @@ uniform vec3 pointPos[MAX_POINT_LIGHTS];
 uniform vec3 pointColor[MAX_POINT_LIGHTS];     // colour * intensity
 uniform vec2 pointFalloff[MAX_POINT_LIGHTS];   // x = soft radius r0, y = range
 
-// ---- emission ----
+// emission
 uniform float windowGlow;                      // 0..1, hut lights (L)
 uniform float fireGlow;                        // 0..~1.3, campfire flicker (F)
 uniform vec3 windowEmitColor;
 uniform vec3 fireEmitColor;
 
-// ---- imported models (src/Model.cpp); stay 0 for the procedural mesh ----
+// imported models (src/Model.cpp); 0 for the procedural mesh
 uniform int useTexture;                        // albedo = colour * texture
 uniform int alphaCutout;                       // discard where texture alpha < 0.5 (branches)
 uniform int twoSided;                          // flip the normal on back faces (thin cards, cloth)
 uniform sampler2D albedoMap;
 
-// ---------------------------------------------------------------
-// Hash without sine (Dave Hoskins, MIT) + value noise.
-// Not called noise2/noise3: those names are GLSL built-ins and strict drivers reject a redefinition.
-// ---------------------------------------------------------------
+// Hash without sine (Dave Hoskins, MIT) and value noise.
 float hash12(vec2 p)
 {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -96,9 +94,7 @@ float fbm3(vec3 p)
 	return 0.5 * valueNoise3(p) + 0.3 * valueNoise3(p * 2.1) + 0.2 * valueNoise3(p * 4.3);
 }
 
-// ---------------------------------------------------------------
-// Procedural patterns: albedo change for each pattern id
-// ---------------------------------------------------------------
+// Procedural patterns
 vec3 Pattern(vec3 base, int id, vec2 uv, vec3 lp)
 {
 	if (id == 1)          // bark: grain along the log
@@ -115,7 +111,7 @@ vec3 Pattern(vec3 base, int id, vec2 uv, vec3 lp)
 		float line = smoothstep(0.0, 0.18, ring) * smoothstep(1.0, 0.55, ring);
 		return base * mix(0.62, 1.05, line) * (0.85 + 0.15 * smoothstep(0.0, 0.01, r));
 	}
-	if (id == 3)          // snow: soft drifts of tone
+	if (id == 3)          // snow
 	{
 		return base * (0.93 + 0.09 * valueNoise3(lp * 22.0));
 	}
@@ -128,7 +124,7 @@ vec3 Pattern(vec3 base, int id, vec2 uv, vec3 lp)
 	return base;
 }
 
-// Point light falloff (see src/SceneLights.h)
+// Point light falloff (src/SceneLights.h)
 float Attenuation(float d, vec2 falloff)
 {
 	float soft = 1.0 / (1.0 + (d * d) / (falloff.x * falloff.x));
@@ -156,8 +152,8 @@ void main()
 	if (twoSided == 1 && !gl_FrontFacing) N = -N;
 	vec3 V = normalize(camPos - vWorldPos);
 
-	// terrain: snow where the ground is gentle (and higher up), bare rock on steep faces;
-	// mountain shadows were baked per vertex: uv.x = moon, uv.y = sun
+	// terrain: snow where the ground is gentle and higher up, bare rock on steep faces
+	// mountain shadows are baked per vertex: uv.x = moon, uv.y = sun
 	float snowCover = (pattern == 3) ? 1.0 : 0.0;
 	float keyVisible = 1.0;
 	if (pattern == 5)
@@ -187,7 +183,7 @@ void main()
 		specular += moonColor * specStrength * pow(max(dot(N, H), 0.0), shininess) * step(0.0, dot(N, L)) * keyVisible;
 	}
 
-	// cool sky fill from the side opposite the moon, so faces turned away from it still read
+	// cool sky fill from the side opposite the moon
 	{
 		vec3 F = normalize(vec3(-moonDir.x, 0.35, -moonDir.z));
 		diffuse += skyAmbient * 0.8 * max(dot(N, F), 0.0);

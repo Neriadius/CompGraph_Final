@@ -16,7 +16,6 @@ static uint32_t hashTexel(uint32_t face, uint32_t x, uint32_t y)
 	return h ^ (h >> 16);
 }
 
-// Person 4 can later replace this body with a loaded image set.
 GLuint CreateNightSkyCubemap(int size)
 {
 	if (size <= 0) return 0;

@@ -5,7 +5,7 @@
 
 #include "shaderClass.h"
 
-// 2D texture loader (Person 4). Shared helper: anyone can use it.
+// 2D texture loader
 //
 //   Texture wood;
 //   wood.Load("textures/wood.png", GL_REPEAT, true);   // true = crisp pixel look

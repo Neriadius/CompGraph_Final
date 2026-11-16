@@ -1,7 +1,6 @@
 #version 330 core
 
-// Campfire flame (Person 3): a few teardrop "tongues" that sway and stretch in time.
-// The mesh is built once (src/Campfire.cpp); all motion happens here.
+// Campfire flame: a few teardrop shapes that sway and stretch in time
 
 layout (location = 0) in vec3 aPos;      // fire space, tongue at rest
 layout (location = 1) in vec3 aNormal;
@@ -23,7 +22,7 @@ void main()
 	float seed = aFlame.y;
 	vec2 axis = aFlame.zw;
 
-	// each tongue stretches with its own rhythm (two sines at unrelated frequencies)
+	// each tongue stretches with its own rhythm
 	float stretch = 0.82 + 0.16 * sin(time * 8.3 + seed * 6.1) + 0.08 * sin(time * 21.7 + seed * 2.3);
 	float level = fireLevel * (0.92 + 0.08 * sin(time * 3.1 + seed));
 
@@ -32,7 +31,7 @@ void main()
 	p.y *= stretch * level;
 	p.xz *= mix(1.0, level, 0.5);                        // tongues gather to the centre when small
 
-	// sway: the higher the point, the more it moves
+	// the higher the point, the more it moves
 	float sway = t * t * 0.018;
 	p.x += sway * sin(time * 6.1 + seed * 11.0 + t * 3.0);
 	p.z += sway * cos(time * 5.3 + seed * 5.0 + t * 2.5);

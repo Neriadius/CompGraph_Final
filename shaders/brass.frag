@@ -45,7 +45,7 @@ vec3 sceneLighting(vec3 n, vec3 worldPos, float shininess, float specStrength)
 }
 
 
-// ---- value noise ----
+// value noise
 float hash(vec3 p)
 {
 	p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
@@ -91,7 +91,7 @@ void main()
 	vec3 p = vLocalPos;
 	vec3 nl = normalize(vLocalNormal);
 
-	// ---- bump from the grain (computed in the key's own space) ----
+	// bump from the grain (computed in the key's own space)
 	float g = grain(p, nl);
 	const float e = 0.002;
 	vec3 grad = vec3(grain(p + vec3(e, 0, 0), nl) - g,
@@ -103,7 +103,7 @@ void main()
 	vec3 n = normalize(mat3(transpose(inverse(model))) * nl);
 	vec3 v = normalize(camPos - vWorldPos);
 
-	// ---- colour ----
+	// colour
 	float blotch = fbm(p * 9.0);
 	float tone = clamp(0.40 * g + 0.60 * blotch, 0.0, 1.0);
 	vec3 brassDark  = vec3(0.80, 0.55, 0.12);

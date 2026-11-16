@@ -1,8 +1,7 @@
 #ifndef SMOKE_H
 #define SMOKE_H
 
-// Smoke rising from the hut's chimney (Person 3). Camera-facing puffs generated in
-// shaders/smoke.vert from gl_VertexID; this class only sets uniforms and blending.
+// Smoke rising from the hut's chimney. Camera-facing puffs generated in shaders/smoke.vert from gl_VertexID
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
