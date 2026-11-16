@@ -120,6 +120,7 @@ void idle()
 
 	shake.Update(dt);
 	musicBox.Update(shake.count, dt);       // key sound on each shake, music after the 3rd
+	camera->Update(dt);                  // frame-rate-independent camera easing
 	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
 	scene.Update(frame);                    // interior: fire flicker, light fades
@@ -132,6 +133,11 @@ void specialKeys(int key, int, int)
 {
 	if (camera->SpecialInputs(key))
 		glutPostRedisplay();
+}
+
+void specialKeysUp(int key, int, int)
+{
+	camera->SpecialUp(key);
 }
 
 // C / P / WASD / +- are handled by the camera, ESC quits
@@ -147,6 +153,11 @@ void keyboard(unsigned char key, int, int)
 
 	if (camera->Inputs(key))
 		glutPostRedisplay();
+}
+
+void keyboardUp(unsigned char key, int, int)
+{
+	camera->KeyUp(key);
 }
 
 // Mouse: RIGHT button drag = look around (free camera).
@@ -232,7 +243,10 @@ int main(int argc, char** argv)
 	glutIdleFunc(idle);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboardUp);
 	glutSpecialFunc(specialKeys);
+	glutSpecialUpFunc(specialKeysUp);
+	glutIgnoreKeyRepeat(1); // Let Camera::Update() handle held keys.
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
@@ -240,7 +254,7 @@ int main(int argc, char** argv)
 		<< "C: orbit / free camera   P: projection   ESC: quit\n"
 		<< "L: hut lights on/off   F: campfire on/off   I: day / night\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
-		<< "FREE : WASD move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
+		<< "FREE : hold WASD to move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
 
 	glutMainLoop();
 	musicBox.Shutdown();
