@@ -5,6 +5,7 @@
 
 #include "InteriorLayout.h"
 #include "SceneConstants.h"
+#include "SceneLights.h"
 
 using namespace layout;
 
@@ -62,12 +63,29 @@ float GroundY(float x, float z)
 	return GROUND_Y_RATIO + TerrainOffset(x, z) - REST_LIFT;
 }
 
+// How much of a light reaches point p (1 = lit, 0 = behind a mountain): march towards the
+// light over the height map. The edge is soft (penumbra grows with distance).
+static float TerrainVisibility(const glm::vec3& p, const glm::vec3& L)
+{
+	float vis = 1.0f;
+	for (float t = 0.012f; t < 1.2f; t += 0.006f + 0.03f * t)
+	{
+		glm::vec3 q = p + L * t;
+		if (q.x * q.x + q.z * q.z > GROUND_DISC_R * GROUND_DISC_R) break;
+		float h = GROUND_Y_RATIO + TerrainOffset(q.x, q.z);
+		vis = std::min(vis, (q.y - h) / (0.05f * t + 0.004f));
+		if (vis <= 0.0f) return 0.0f;
+	}
+	return vis;
+}
+
 // ---------------------------------------------------------------
-// Snow ground: polar grid that follows the drifts, with a packed path and a scorched ring
+// Ground: polar grid over the terrain height map (mountains, drifts), with a packed path,
+// a scorched ring, and mountain shadows for the moon and the sun baked into uv
 // ---------------------------------------------------------------
 void BuildGround(MeshBuilder& mb)
 {
-	const int rings = 56, slices = 144;
+	const int rings = 110, slices = 240;
 	GLuint first = mb.VertexCount();
 
 	auto pos = [&](int i, int j) {
@@ -76,8 +94,14 @@ void BuildGround(MeshBuilder& mb)
 		float x = r * std::cos(a), z = r * std::sin(a);
 		return glm::vec3(x, GroundY(x, z), z);
 	};
-	auto uv = [&](int i, int j) { glm::vec3 p = pos(i, j); return glm::vec2(p.x, p.z); };
-	mb.Grid(rings, slices, true, pos, uv, palette::Snow());
+	auto uv = [&](int i, int j) {
+		glm::vec3 p = pos(i, j);
+		p.y += REST_LIFT + 0.004f;                         // start on the surface, avoid self-shadowing
+		return glm::vec2(TerrainVisibility(p, sky::MOON_DIR), TerrainVisibility(p, sky::SUN_DIR));
+	};
+	Material ground = palette::Snow();
+	ground.pattern = PAT_TERRAIN;
+	mb.Grid(rings, slices, true, pos, uv, ground);
 
 	// Path from the hut door to the fire, packed snow around the fire, scorched ring
 	float doorX, doorZ;

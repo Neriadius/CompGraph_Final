@@ -27,6 +27,7 @@ enum Pattern
 	PAT_RINGS = 2,     // tree rings on cut log ends (uv = position on the cap)
 	PAT_SNOW = 3,      // soft variation + glitter
 	PAT_STONE = 4,     // mottled stone
+	PAT_TERRAIN = 5,   // ground: snow on gentle slopes, rock on steep ones; uv = baked shadows
 };
 
 struct Material
