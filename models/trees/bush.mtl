@@ -1,0 +1,7 @@
+newmtl treebaretall
+Kd 1.0000 1.0000 1.0000
+Ks 0.1 0.1 0.1
+Ns 16
+d 1
+map_Kd treebaretall_baseColor.png
+map_d treebaretall_baseColor.png

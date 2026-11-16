@@ -57,6 +57,8 @@ FrameContext MakeFrame(float timeSeconds)
 		std::sin(timeSeconds * 61.0f),
 		std::sin(timeSeconds * 53.0f));
 	frame.globeModel = glm::translate(glm::mat4(1.0f), jitter * (0.03f * shake.intensity));
+	frame.daylight = scene.Lights().daylight;          // I key: day / night (Person 3)
+	frame.keyLightDir = scene.Lights().moonDir;
 
 	return frame;
 }
@@ -66,7 +68,8 @@ void display()
 	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 	FrameContext frame = MakeFrame(time);
 
-	glClearColor(0.05f, 0.06f, 0.1f, 1.0f);
+	glm::vec3 background = BackgroundColor(frame.daylight);
+	glClearColor(background.r, background.g, background.b, 1.0f);
 	// Restore depth writes so glClear clears the depth buffer.
 	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -101,6 +104,7 @@ void idle()
 	musicBox.Update(shake.count, dt);       // key sound on each shake, music after the 3rd
 	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
+	scene.Update(frame);                    // interior: fire flicker, light fades
 	snow.Update(frame);
 	glutPostRedisplay();
 }
@@ -119,6 +123,9 @@ void keyboard(unsigned char key, int, int)
 
 	if (key == ' ')
 		shake.Impulse(0.6f);
+
+	if (scene.Inputs(key))                  // L = hut lights, F = campfire
+		return;
 
 	if (camera->Inputs(key))
 		glutPostRedisplay();
@@ -208,6 +215,7 @@ int main(int argc, char** argv)
 
 	std::cout << "SPACE / left mouse: shake the globe (3 shakes start the music box)\n"
 		<< "C: orbit / free camera   P: projection   ESC: quit\n"
+		<< "L: hut lights on/off   F: campfire on/off   I: day / night\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
 		<< "FREE : WASD move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
 
