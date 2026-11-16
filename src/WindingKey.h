@@ -5,6 +5,7 @@
 
 #include "FrameContext.h"
 
+struct SceneLights;
 class Camera;
 class Shader;
 class VAO;
@@ -16,7 +17,7 @@ class WindingKey
 {
 public:
 	void Init();
-	void Draw(const FrameContext& frame, Camera& camera);
+	void Draw(const FrameContext& frame, Camera& camera, const SceneLights& lights);
 
 private:
 	Shader* shader = nullptr;

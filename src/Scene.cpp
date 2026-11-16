@@ -13,6 +13,7 @@
 #include "EBO.h"
 #include "SceneConstants.h"
 #include "WindingKey.h"
+#include "Nameplate.h"
 #include "Interior.h"
 
 // ---------------------------------------------------------------
@@ -121,6 +122,9 @@ void Scene::Init()
 		baseVAO->LinkAttrib(vbo, 2, 2, GL_FLOAT, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 	}
 
+	nameplate = new Nameplate();
+	nameplate->Init();
+
 	windingKey = new WindingKey();
 	windingKey->Init();
 
@@ -138,16 +142,17 @@ void Scene::DrawOpaque(const FrameContext& frame, Camera& camera)
 	baseShader->Activate();
 	camera.Matrix(45.0f, frame.globeRadius * 0.01f, frame.globeRadius * 50.0f, *baseShader, "camMatrix");
 	glUniformMatrix4fv(glGetUniformLocation(baseShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(frame.globeModel));
-	OutsideLightValues outside = OutsideLight(frame.daylight);     // same as before at night
-	glUniform3fv(glGetUniformLocation(baseShader->ID, "lightDir"), 1, glm::value_ptr(outside.dir));
-	glUniform3fv(glGetUniformLocation(baseShader->ID, "lightColor"), 1, glm::value_ptr(outside.color));
-	glUniform3fv(glGetUniformLocation(baseShader->ID, "ambientColor"), 1, glm::value_ptr(outside.ambient));
+	UploadSceneLights(baseShader->ID, Lights());
+	glUniform3fv(glGetUniformLocation(baseShader->ID, "camPos"), 1, glm::value_ptr(frame.camPos));
 	woodTexture->Bind(0);
 	baseVAO->Bind();
 	glDrawElements(GL_TRIANGLES, baseIndexCount, GL_UNSIGNED_INT, 0);
 
+	// Curved metal nameplate follows the base and receives the shared lights.
+	nameplate->Draw(frame, camera, Lights());
+
 	// Winding key on the base: turns when the globe is shaken
-	windingKey->Draw(frame, camera);
+	windingKey->Draw(frame, camera, Lights());
 
 	// Interior: ground, trees, hut, campfire, character (Person 3)
 	interior->Draw(frame, camera);

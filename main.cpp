@@ -5,6 +5,7 @@
 // TODO (wow):     hard shake -> blizzard that slowly settles
 
 #include <iostream>
+#include <cstdio>
 #include <cmath>
 #include <filesystem>
 
@@ -20,6 +21,7 @@
 #include "src/Snow.h"
 #include "src/Globe.h"
 #include "src/MusicBox.h"
+#include "src/FpsCounter.h"
 
 const int WINDOW_W = 1280;
 const int WINDOW_H = 720;
@@ -36,6 +38,7 @@ Scene scene;
 Snow snow;
 Globe globe;
 MusicBox musicBox;
+FpsCounter fpsCounter;
 float frameDt = 0.0f;
 
 // ---------------------------------------------------------------
@@ -80,6 +83,11 @@ void display()
 	snow.Draw(frame, *camera);
 	globe.DrawGlass(GlassPass::Front, frame, *camera);
 
+	// Update the measurement and draw a modern OpenGL overlay after all 3D passes.
+	if (fpsCounter.Frame(glutGet(GLUT_ELAPSED_TIME)) && fpsCounter.Visible())
+		glutSetWindowTitle(fpsCounter.Title().c_str());
+	fpsCounter.Draw(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+
 	glutSwapBuffers();
 }
 
@@ -102,6 +110,7 @@ void idle()
 
 	shake.Update(dt);
 	musicBox.Update(shake.count, dt);       // key sound on each shake, music after the 3rd
+	camera->Update(dt);                  // frame-rate-independent camera easing
 	camera->ClampToSphere(GLOBE_CENTER, CAMERA_SOFT_RADIUS, CAMERA_EASE_SPEED, dt);
 	FrameContext frame = MakeFrame(currentTime / 1000.0f);
 	scene.Update(frame);                    // interior: fire flicker, light fades
@@ -116,10 +125,23 @@ void specialKeys(int key, int, int)
 		glutPostRedisplay();
 }
 
+void specialKeysUp(int key, int, int)
+{
+	camera->SpecialUp(key);
+}
+
 // C / P / WASD / +- are handled by the camera, ESC quits
 void keyboard(unsigned char key, int, int)
 {
 	if (key == 27) { glutLeaveMainLoop(); return; }
+
+	if (key == ';')
+	{
+		fpsCounter.Toggle();
+		glutSetWindowTitle(fpsCounter.Title().c_str());
+		glutPostRedisplay();
+		return;
+	}
 
 	if (key == ' ')
 		shake.Impulse(0.6f);
@@ -129,6 +151,11 @@ void keyboard(unsigned char key, int, int)
 
 	if (camera->Inputs(key))
 		glutPostRedisplay();
+}
+
+void keyboardUp(unsigned char key, int, int)
+{
+	camera->KeyUp(key);
 }
 
 // Mouse: RIGHT button drag = look around (free camera).
@@ -186,7 +213,8 @@ int main(int argc, char** argv)
 
 	glutInitContextVersion(3, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
+	glutSetOption(GLUT_MULTISAMPLE, 4); // Request four samples; actual support depends on driver.
 	glutInitWindowSize(WINDOW_W, WINDOW_H);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Snow Globe");
@@ -198,6 +226,11 @@ int main(int argc, char** argv)
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	fpsCounter.Init();
+	GLint actualSamples = 0;
+	glGetIntegerv(GL_SAMPLES, &actualSamples);
+	std::cout << "MSAA samples: " << actualSamples << std::endl;
 
 	camera = new Camera(WINDOW_W, WINDOW_H, GLOBE_CENTER, GLOBE_RADIUS);
 	scene.Init();
@@ -209,15 +242,18 @@ int main(int argc, char** argv)
 	glutIdleFunc(idle);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboardUp);
 	glutSpecialFunc(specialKeys);
+	glutSpecialUpFunc(specialKeysUp);
+	glutIgnoreKeyRepeat(1); // Let Camera::Update() handle held keys.
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
 	std::cout << "SPACE / left mouse: shake the globe (3 shakes start the music box)\n"
-		<< "C: orbit / free camera   P: projection   ESC: quit\n"
+		<< "C: orbit / free camera   P: projection   ;: toggle FPS title + overlay   ESC: quit\n"
 		<< "L: hut lights on/off   F: campfire on/off   I: day / night\n"
 		<< "ORBIT: arrows = angle/height, +/- = zoom\n"
-		<< "FREE : WASD move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
+		<< "FREE : hold WASD to move, Q/E down/up, right-mouse drag or arrows = look, +/- = speed" << std::endl;
 
 	glutMainLoop();
 	musicBox.Shutdown();
